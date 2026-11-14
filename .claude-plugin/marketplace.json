@@ -1,0 +1,19 @@
+{
+  "name": "astack",
+  "owner": { "name": "Amol" },
+  "metadata": {
+    "description": "Single-plugin marketplace for astack, Amol's personal engineering OS."
+  },
+  "plugins": [
+    {
+      "name": "astack",
+      "source": "./",
+      "description": "Personal engineering operating system for the Easeur ecosystem: 6 skills, 4 deterministic hooks, layered product context, and a three-tier project memory.",
+      "version": "1.0.0",
+      "author": { "name": "Amol" },
+      "repository": "https://github.com/amol3793/astack",
+      "license": "MIT",
+      "keywords": ["easeur", "workflow", "memory", "safety", "verification"]
+    }
+  ]
+}

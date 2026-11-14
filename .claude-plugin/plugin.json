@@ -1,0 +1,9 @@
+{
+  "name": "astack",
+  "description": "Amol's personal engineering operating system for the Easeur ecosystem: state memory, evidence discipline, deterministic safety gates, and Easeur product context.",
+  "version": "1.0.0",
+  "author": { "name": "Amol" },
+  "repository": "https://github.com/amol3793/astack",
+  "license": "MIT",
+  "keywords": ["easeur", "workflow", "memory", "safety", "verification"]
+}
