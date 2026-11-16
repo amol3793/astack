@@ -77,8 +77,14 @@ Wait. When he says it passed, or says commit, continue.
 - Bisectable chunks. One logical change per commit, not one giant blob.
 - Update `BUILD_STATE.md` **in the same commit** as the work it describes. A state file
   that lags the code is worse than none.
-- If a decision was made along the way, append it to `.astack/decisions.md` with an id,
-  the date, the alternatives rejected, and what would reopen it.
+- If a decision was made along the way, add it to `BUILD_STATE.md` as a D-entry: id,
+  date, the alternatives rejected, and what would reopen it.
+- If something was tried twice and failed, or cost more than about 15 minutes, add one
+  line to the dead-ends list in `~/.claude/CLAUDE.md` and the full entry to
+  `~/.claude/references/dead-ends.md`. That list is the only lessons file.
+- First public deploy of an app, or a change that adds sign-in, payments, marketing
+  email, AI output or a new kind of personal data: run the `launch` skill first. A FAIL
+  there blocks the deploy.
 - If Amol accepted a shortcut, mark it in the code where the corner was cut:
   `astack-shortcut(<decision-id>): <what is missing>, upgrade when <trigger>`.
 

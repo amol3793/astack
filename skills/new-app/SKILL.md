@@ -100,3 +100,7 @@ Say each one and wait. Do not run them unasked.
 ```
 
 Report with the four-state table from `verify`. "Scaffolded" is not "works".
+
+Before the first public deploy, run the `launch` skill. Add `/privacy` and `/terms`
+routes while scaffolding (copy Workout's; Eat has none yet), so that check does not
+start from a 404.

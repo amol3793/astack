@@ -1,7 +1,7 @@
 # astack
 
 Amol's personal engineering operating system for the Easeur ecosystem.
-One Claude Code plugin: 10 skills, 5 hooks, layered product context, three kinds of
+One Claude Code plugin: 12 skills, 5 hooks, layered product context, three kinds of
 memory, and a router so you never have to remember a skill name.
 
 ```
@@ -59,6 +59,8 @@ suite. Patterns come from your own prompt history.
 | `product` | Challenge an idea before building it; AI-necessity test |
 | `review` | Confidence-scored review that suppresses what it cannot quote |
 | `web` | SEO, browser pass, visual review |
+| `design` | UI and UX work: register, dials, anti-slop floor, and which library to use for what |
+| `launch` | Pre-launch checklist: legal, privacy, consent, accessibility, honesty, past lessons |
 | `audit` | astack checking itself for rot |
 | `new-app` | Starting a new Easeur app: skeleton, CI, watch, and the five places it registers |
 | `caveman` | Terse output mode |

@@ -54,12 +54,13 @@ if (!file || !fs.existsSync(file)) {
   process.exit(0);
 }
 
-let turns = 0;
-let input = 0;
-let output = 0;
-let thinking = 0;
-let cacheRead = 0;
-let cacheWrite = 0;
+// One model reply is stored as several transcript lines (one per content block: thinking,
+// text, each tool call), and every line repeats that reply's usage. Summing lines counted a
+// reply with three tool calls four times (found 2026-11-16: 33 "turns" and 604k written for a
+// session that had 12 replies and 152k). Keep one usage per message id, the last one seen,
+// because the last line carries the final output count.
+const replies = new Map();
+let anonymous = 0;
 
 for (const line of fs.readFileSync(file, "utf8").split("\n")) {
   if (!line.trim()) continue;
@@ -71,6 +72,17 @@ for (const line of fs.readFileSync(file, "utf8").split("\n")) {
   }
   const u = (d.message || {}).usage;
   if (!u) continue;
+  replies.set(d.message.id || `no-id-${anonymous++}`, u);
+}
+
+let turns = 0;
+let input = 0;
+let output = 0;
+let thinking = 0;
+let cacheRead = 0;
+let cacheWrite = 0;
+
+for (const u of replies.values()) {
   turns++;
   input += u.input_tokens || 0;
   output += u.output_tokens || 0;
@@ -96,7 +108,7 @@ console.log(`
   astack token-stats
   transcript: ${path.basename(file)}
 
-  turns with usage      ${n(turns)}
+  model replies         ${n(turns)}
 
   fresh input           ${n(input)}
   cache written         ${n(cacheWrite)}

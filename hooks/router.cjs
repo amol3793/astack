@@ -89,6 +89,7 @@ const RULES = [
     "check astack and the setup around it for rot: stale facts, dead skills, router gaps",
     [
       [4, /\baudit (astack|(my |the |our )?(current |whole |claude )?(setup|tooling|workflow))\b/],
+      [5, /\b(review|check|audit|improve) (my |the |our )?(astack|claude setup|skills and hooks)\b/],
       [3, /\b(astack|the router|my setup) (is|feels|seems) (stale|wrong|off|broken)\b/],
     ],
   ],
@@ -127,6 +128,22 @@ const RULES = [
       [3, /\b(make|build|create) (me |the |a |an )?(new )?(landing page|hero section|dashboard ui|component library)\b/],
       [2, /\b(looks?|feels?) (bland|generic|boring|ugly|dated|off|templated)\b/],
       [2, /\b(more (polished|premium|modern)|spacing|font pairing)\b/],
+      // Gaps found 2026-11-16: every animation and UX prompt got silence.
+      [3, /\b(animations?|animate|micro.?interactions?|parallax|hover (effect|state|animation))\b/],
+      [3, /\b(user experience|ux|onboarding flow|janky|jank)\b/],
+      // Weak alone on purpose: "state transition" and "smoother to read" are not UI.
+      [2, /\b(transitions?|smoother|laggy)\b/],
+      [3, /\b(shadcn|magic ?ui|kokonut|bklit|21st\.dev|motion\.dev|anime\.?js|three\.?js)\b/],
+      [3, /\b(make|get) (the |this |my )?[\w ]{0,30}(look|feel) (better|good|nicer|premium|smooth)/],
+    ],
+  ],
+  [
+    "launch",
+    "run the pre-launch checklist: legal, privacy, accessibility, honesty, past lessons",
+    [
+      [4, /\b(pre.?launch|launch (check|checklist|ready|readiness)|ready (to|for) launch|before (we |i )?launch)/],
+      [3, /\b(privacy policy|terms of service|cookie banner|refund policy|dpdp|gdpr|compliance check)\b/],
+      [3, /\b(go public|open (it )?to (real )?users|public launch)\b/],
     ],
   ],
   [

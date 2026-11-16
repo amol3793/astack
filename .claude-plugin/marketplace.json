@@ -8,7 +8,7 @@
     {
       "name": "astack",
       "source": "./",
-      "description": "Personal engineering operating system for the Easeur ecosystem: 6 skills, 4 deterministic hooks, layered product context, and a three-tier project memory.",
+      "description": "Personal engineering operating system for the Easeur ecosystem: 12 skills, 5 deterministic hooks, layered product context, and a three-tier project memory.",
       "version": "1.0.0",
       "author": { "name": "Amol" },
       "repository": "https://github.com/amol3793/astack",

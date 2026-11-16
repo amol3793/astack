@@ -83,15 +83,16 @@ if it is pinned by a test.
 ```bash
 wc -l context/spine.md              # budget 120
 wc -l context/products/*.md         # budget ~60 each
-wc -c ~/.astack/lessons.md          # grows slowly, or it is not a lessons file
+wc -l ~/.claude/references/dead-ends.md   # the lessons tier; grows slowly
 ```
 
 The spine is paid for in every session in every repo. A line that is not carrying its
 weight is costing you on every turn forever.
 
-Lessons older than about six months, or about a platform that has since changed, get
+Dead ends older than about six months, or about a platform that has since changed, get
 pruned. A lessons file nobody reads is the failure mode that left
-`~/.claude/skills/learned/` empty.
+`~/.claude/skills/learned/` empty. Also check `skills/launch/laws.md`: any date past
+its re-check line gets looked up again.
 
 ## 6 — check what upstream changed
 

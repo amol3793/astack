@@ -98,6 +98,18 @@ const MEDIUM = [
     "Docker prune or remove destroys containers or volumes.",
   ],
   [/\bsupabase\s+db\s+reset\b/, "This resets the database."],
+  // The real deploy path. A dispatch ships to production at once (no required
+  // reviewers), so it is a Cloudflare write by another name.
+  [
+    /\bgh\s+workflow\s+run\b[\s\S]*deploy/i,
+    "This dispatches a production deploy. Amol confirms each deploy.",
+  ],
+  // A Cloudflare write hidden in a compound command (`cd x && npx wrangler deploy`)
+  // misses the HIGH tier, which only reads simple commands. Catch it here.
+  [
+    /\bwrangler\s+(deploy|publish|delete|rollback|secret\s+put|pages\s+deploy|versions\s+deploy)\b/,
+    "Cloudflare write inside a compound command.",
+  ],
 ];
 
 for (const [pattern, why] of MEDIUM) {

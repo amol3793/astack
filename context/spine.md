@@ -9,10 +9,9 @@ Amol reads little and understands diagrams faster than prose.
 - If the answer has structure — architecture, flow, state, sequence, before/after,
   or a comparison of options — **draw it first**. ASCII in the terminal, Mermaid
   only inside a document or artifact where it renders.
-- Diagram first where the answer has structure. On every other question of response shape,
-  the i-have-adhd rules win when they disagree with this file.
-- A diagram that carries meaning is content, not decoration.
-- Terse prose is the baseline.
+- Then caveman-full prose: drop filler, keep every fact, path and number. Tables and
+  bullets over paragraphs. Aim for about 15 lines on screen.
+- This is the one output rule. It beats any other style rule that disagrees.
 
 ## Evidence rules
 
@@ -77,6 +76,7 @@ Report `CLEAN`, `DRIFT` (extra work not requested), or `MISSING` (requirements d
 ## Where state lives
 
 - `<repo>/BUILD_STATE.md` — where the build is. The single source of truth.
-- `<repo>/.astack/decisions.md` — why things are the way they are. Append-only.
-- `~/.astack/lessons.md` — cross-repo pitfalls. Promoted only on evidence.
+- Decisions are D-entries in `BUILD_STATE.md`: chosen, rejected, why, reopen when.
+- Lessons are the dead-ends list in `~/.claude/CLAUDE.md` (detail in
+  `~/.claude/references/dead-ends.md`). Something failed twice: add one line there.
 - `D:\work\easeur\CLAUDE.md` — the app map. Authoritative, never copied into astack.

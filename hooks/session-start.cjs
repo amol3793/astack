@@ -31,6 +31,11 @@ const parts = [];
 const spine = read("context/spine.md");
 if (spine) parts.push(spine);
 
+// Caveman is on by default (owner request, 2026-11-16). This is the short form: the full
+// skill is ~1.8k tokens and would break the 1500-token payload budget in test/validate.cjs.
+const caveman = read("context/caveman.md");
+if (caveman) parts.push(caveman);
+
 for (const [marker, name] of PRODUCTS) {
   if (!cwd.includes(marker)) continue;
   const ctx = read(`context/products/${name}.md`);
@@ -38,15 +43,9 @@ for (const [marker, name] of PRODUCTS) {
   break;
 }
 
-// Cross-repo lessons, if any have been promoted.
-try {
-  const lessons = fs
-    .readFileSync(path.join(require("os").homedir(), ".astack", "lessons.md"), "utf8")
-    .trim();
-  if (lessons) parts.push("# Lessons (cross-repo)\n\n" + lessons);
-} catch {
-  /* none yet */
-}
+// Cross-repo lessons are the dead-ends list in ~/.claude/CLAUDE.md, which Claude Code
+// loads by itself. Nothing to load here (the unused ~/.astack/lessons.md tier was
+// removed 2026-11-16).
 
 if (!parts.length) process.exit(0);
 

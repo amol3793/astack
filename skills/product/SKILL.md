@@ -98,7 +98,7 @@ enforceable.
   EXPERIMENTAL  we are guessing; treat the result as evidence, not a feature
 ```
 
-Write the decision to `.astack/decisions.md`: what was chosen, what was rejected, why,
+Write the decision to `BUILD_STATE.md` as a D-entry: what was chosen, what was rejected, why,
 and what would reopen it. The next session inherits the reasoning instead of relitigating.
 
 ## Step 6 — check it against the catalogue

@@ -139,6 +139,34 @@ check("careful honours its escape hatch", () => {
   return d === null ? null : `got ${d}`;
 });
 
+// ---------- deploy paths the HIGH tier cannot see (added 2026-11-16) ----------
+// Guards: a production deploy never runs without a confirmation, whichever shell or
+// command shape carries it.
+const DEPLOY_PATHS = [
+  ['gh workflow run "Deploy to Cloudflare" --ref main', "ask", "CI deploy dispatch"],
+  ['gh workflow run "Deploy to Cloudflare" -R founder-easeur/eat', "ask", "CI deploy dispatch, other repo"],
+  ["cd ../workout && npx wrangler deploy", "ask", "wrangler deploy inside a compound command"],
+  ["gh workflow run nightly-watch.yml", null, "a workflow that is not a deploy"],
+  ["gh run list --workflow deploy.yml", null, "reading deploy runs"],
+];
+
+for (const [command, want, label] of DEPLOY_PATHS) {
+  check(`careful deploy path: ${label}`, () => {
+    const d = runHook("careful.cjs", { command });
+    return d === want ? null : `want ${want}, got ${d}`;
+  });
+}
+
+check("careful and commit-gate also guard PowerShell", () => {
+  const h = readJSON("hooks/hooks.json");
+  const entry = h.hooks.PreToolUse.find((e) =>
+    e.hooks.some((x) => x.command.includes("commit-gate.cjs"))
+  );
+  const tools = entry.matcher.split("|");
+  if (!tools.includes("Bash") || !tools.includes("PowerShell")) return `matcher is ${entry.matcher}`;
+  if (!entry.hooks.some((x) => x.command.includes("careful.cjs"))) return "careful not on the same matcher";
+});
+
 // ---------- file removal, per segment ----------
 // Regression guard for the first real false positive astack produced: a temp-file
 // cleanup at the end of a build pipeline was flagged as destructive because -f was
@@ -315,6 +343,18 @@ const ROUTES = [
   ["audit my current setup for easeur projects", "audit"],
   ["lets start a new app for finance", "new-app"],
   ["scaffold a new project for docs", "new-app"],
+  // Gaps found by the 2026-11-16 review: UI and animation prompts got nothing, and
+  // "review my astack" went to code review.
+  ["make the workout home page animation smoother", "design"],
+  ["add a hover animation to the cards", "design"],
+  ["use shadcn for the settings page", "design"],
+  ["make the hero look better", "design"],
+  ["the onboarding ux feels janky", "design"],
+  ["I want you to review my astack in details one by one each component", "audit"],
+  ["run the pre-launch checklist for eat", "launch"],
+  ["is workout ready to launch?", "launch"],
+  ["do we need a cookie banner on the landing page", "launch"],
+  ["add a privacy policy and terms of service to eat", "launch"],
 ];
 
 for (const [prompt, want] of ROUTES) {
@@ -383,6 +423,9 @@ for (const [prompt, want] of REAL_PROMPTS) {
 const REAL_SILENT = [
   "checkout this repo https://github.com/callstack/liquid-glass",
   "finish the glass coverage",
+  // Design words that also mean something else (2026-11-16).
+  "the state transition in the reducer is wrong",
+  "make the query faster and smoother to read",
 ];
 
 for (const prompt of REAL_SILENT) {
@@ -401,6 +444,53 @@ check("every skill the router names is reachable", () => {
     if (!fs.existsSync(path.join(root, "skills", s, "SKILL.md"))) missing.push(s);
   }
   if (missing.length) return `router names skills that do not exist: ${missing.join(", ")}`;
+});
+
+check(".mcp.json offers the shadcn registry MCP for the design skill", () => {
+  const m = readJSON(".mcp.json");
+  if (!m.mcpServers || !m.mcpServers.shadcn) return "shadcn missing";
+});
+
+// The design skill must say which library to reach for. Amol's list, 2026-11-16.
+check("design skill maps every UI library to a use", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "design", "SKILL.md"), "utf8").toLowerCase();
+  const libs = ["shadcn", "magic ui", "kokonut", "bklit", "motion", "anime.js", "img2threejs",
+    "awesome-design-md", "21st.dev", "taste-skill", "impeccable", "oil-ui"];
+  const missing = libs.filter((l) => !body.includes(l));
+  if (missing.length) return "missing: " + missing.join(", ");
+  if (/npx impeccable install/.test(body)) return "tells the model to run a launcher that is a dead end";
+});
+
+// The launch checklist must keep every item Amol asked for (2026-11-16). A term going
+// missing here means a pre-launch rule was dropped.
+check("launch checklist keeps every required item", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "launch", "SKILL.md"), "utf8").toLowerCase();
+  const need = [
+    "privacy policy", "terms of service", "cookie banner", "unsubscribe", "retention",
+    "contrast", "fake timers", "alt text", "keyboard", "customer logos", "licence",
+    "deletion", "dark patterns", "ai-generated", "checkbox", "refund", "cancel",
+    "collect only", "reviews", "claim", "parental consent", "acceptance recorded",
+    "open-source", "marketing", "soc 2", "takedown", "train models", "auto-renewal",
+    "sdk", "dpa", "before consent", "sub-processors", "uptime", "hidden costs",
+    "business contact",
+  ];
+  const missing = need.filter((t) => !body.includes(t));
+  return missing.length ? "missing: " + missing.join(", ") : null;
+});
+
+check("launch law reference covers India, EU/UK and the US, and says it is not advice", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "launch", "laws.md"), "utf8");
+  for (const t of ["DPDP", "GDPR", "COPPA", "CAN-SPAM", "DMCA", "Dark Patterns", "Not legal advice"])
+    if (!body.includes(t)) return "missing: " + t;
+});
+
+check("no skill points at the memory files that never existed", () => {
+  const bad = [];
+  for (const s of skillDirs) {
+    const body = fs.readFileSync(path.join(root, "skills", s, "SKILL.md"), "utf8");
+    if (/\.astack\/(decisions|lessons)\.md/.test(body)) bad.push(s);
+  }
+  return bad.length ? "still referenced in: " + bad.join(", ") : null;
 });
 
 check(".mcp.json keeps chrome-devtools available without ECC", () => {
@@ -440,6 +530,39 @@ for (const s of SCRIPTS) {
     }
   });
 }
+
+// ---------- token-stats counts a reply once ----------
+// A reply is written as one transcript line per content block, each repeating the reply's
+// usage. Summing lines overstated a real session about 3x (2026-11-16).
+check("token-stats counts each model reply once, not once per transcript line", () => {
+  const dir = fs.mkdtempSync(path.join(require("os").tmpdir(), "astack-stats-"));
+  const file = path.join(dir, "t.jsonl");
+  const line = (id, write, read, out) =>
+    JSON.stringify({
+      type: "assistant",
+      message: { id, usage: { input_tokens: 1, cache_creation_input_tokens: write, cache_read_input_tokens: read, output_tokens: out } },
+    });
+  fs.writeFileSync(
+    file,
+    [
+      line("msg_a", 1000, 5000, 10), // reply A, first block
+      line("msg_a", 1000, 5000, 40), // reply A, second block: same reply, final output
+      line("msg_a", 1000, 5000, 40),
+      line("msg_b", 200, 6000, 7),
+      JSON.stringify({ type: "user", message: { content: "hi" } }),
+    ].join("\n"),
+  );
+  const out = execFileSync("node", [path.join(root, "bin", "token-stats.cjs"), "--session", file], { encoding: "utf8" });
+  fs.rmSync(dir, { recursive: true, force: true });
+  const num = (label) => {
+    const m = out.match(new RegExp(label + "\\s+([\\d,]+)"));
+    return m ? Number(m[1].replace(/,/g, "")) : null;
+  };
+  if (num("model replies") !== 2) return `replies: ${num("model replies")}, want 2`;
+  if (num("cache written") !== 1200) return `cache written: ${num("cache written")}, want 1200`;
+  if (num("cache read") !== 11000) return `cache read: ${num("cache read")}, want 11000`;
+  if (num("output \\(total\\)") !== 47) return `output: ${num("output \\(total\\)")}, want 47`;
+});
 
 // ---------- session-start actually runs ----------
 function runSessionStart(cwd) {
@@ -498,6 +621,13 @@ check("every context/products file is registered in session-start", () => {
     .map((f) => f.replace(/\.md$/, ""))
     .filter((n) => !src.includes(`"${n}"`));
   if (missing.length) return `not registered: ${missing.join(", ")}`;
+});
+
+// Owner request 2026-11-16: caveman is on in every session without typing /caveman.
+check("session-start turns caveman on by default", () => {
+  const o = runSessionStart(root);
+  if (!o) return "emitted nothing";
+  if (!o.additionalContext.includes("Caveman mode: ON by default")) return "caveman block not loaded";
 });
 
 check("session-start payload stays within its context budget", () => {

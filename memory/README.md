@@ -11,11 +11,18 @@ not built yet.
      <repo>/BUILD_STATE.md             read by /where-was-i, written by /ship
 
   3  DECISIONS         why a thing is the way it is
-     <repo>/.astack/decisions.md       append-only, never rewritten
+     D-entries in BUILD_STATE.md       append-only, never rewritten
 
   4  LESSONS           what not to try again, across repos
-     ~/.astack/lessons.md              loaded by session-start, promoted on evidence
+     dead ends in ~/.claude/CLAUDE.md  loaded by Claude Code, promoted on evidence
 ```
+
+**Changed 2026-11-16.** Sections 3 and 4 below describe `.astack/decisions.md` and
+`~/.astack/lessons.md`. Neither file was ever created: every app already records
+decisions as D-entries in `BUILD_STATE.md`, and lessons already live in the dead-ends
+list (`~/.claude/CLAUDE.md`, full entries in `~/.claude/references/dead-ends.md`,
+enforced by the `dead-ends-guard` mod). Those are now the only homes. The entry format
+and the promotion bar below still apply.
 
 The ordering is deliberate. Kinds 2, 3 and 4 are where the pain actually was:
 `where-was-i` is the most-invoked skill in this workspace, 19% of prompts are

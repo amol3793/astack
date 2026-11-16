@@ -140,15 +140,38 @@ When a second screen has to match the first:
 3. Name the register and dials in it, so the next session does not re-derive them.
 
 Cross-app consistency (Workout, Health, Wear sharing a family) is a decision for
-Amol, not a default. Propose, do not impose; record in `.astack/decisions.md`.
+Amol, not a default. Propose, do not impose; record it as a D-entry in `BUILD_STATE.md`.
 
-## Optional: impeccable
+## Where to use what
 
-Not vendored. It downloads an engine binary from GitHub releases on first run and can
-install edit hooks, so install it deliberately:
+Pick from this table before writing a component by hand. First row that fits wins.
+The reuse ladder still applies: what the repo already has beats all of it.
 
-```bash
-npx impeccable install      # then /impeccable init in the target repo
-```
+| Need | Use | How |
+|---|---|---|
+| Base primitives: button, dialog, form, table, sheet, tabs | **shadcn/ui** | shadcn MCP (`search`, `view`, `add`), or `npx shadcn@latest add <name>` |
+| Marketing sections: hero, marquee, bento, animated text, backgrounds | **Magic UI** | `npx shadcn@latest add @magicui/<name>` |
+| Micro-interactions: fancy inputs, buttons, cards, AI-chat pieces | **Kokonut UI** | `npx shadcn@latest add @kokonutui/<name>` |
+| Charts | **Bklit UI** | `npx shadcn@latest add @bklit/<name>`; docs at `bklit.com/llms.txt` |
+| Animation in React: enter/exit, layout, gestures, scroll, springs | **Motion** (`motion/react`) | the default engine. One engine per app |
+| SVG path drawing, morphing, long sequenced timelines | **Anime.js** | only when Motion cannot. Lazy-load it |
+| 3D from a reference image, Experience register only | **img2threejs** + three | never on an Operate screen |
+| Brand reference: "feel like Linear / Stripe" | **awesome-design-md** | read the matching DESIGN.md as input to READ. Do not copy a brand |
+| One-off inspiration for a block | **21st.dev** | opt-in, needs an API key. Ask before sending a prompt there |
+| Critique rules | this skill's floor; `taste-skill`, `impeccable`, `oil-ui` as text | read their rules, do not install their hooks or launchers |
 
-Check its `.claude/settings.json` hooks and `PRODUCT.md` output before committing either.
+Rules that keep the result smooth:
+
+1. Registries are namespaces in the repo's `components.json`. Eat has `@kokonutui` and
+   `@bklit`. Add a namespace before using it; the code is copied in, so read it.
+2. Animate `transform` and `opacity` only. Durations 150 to 300 ms for UI, longer only
+   for a hero. Honour `prefers-reduced-motion` on every animation.
+3. MOTION dial sets the budget: 1 to 3 = hover and focus states only; 4 to 6 = enter
+   and layout transitions; 7 and up = scroll and choreography, Persuade or Experience only.
+4. An Operate screen (Train, a form, settings) gets shadcn plus small Motion feedback.
+   No marquee, no parallax, no 3D.
+5. Check the weight: a new animation library is a dependency. Motion is already in Eat;
+   elsewhere add it once, not Motion and Anime.js both for the same job.
+6. Verify in the browser at 400px on a throttled CPU. A dropped frame is a defect.
+
+Impeccable's launcher downloads a binary: read it as text, never run it (dead end).
