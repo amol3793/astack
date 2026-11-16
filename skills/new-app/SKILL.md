@@ -104,3 +104,18 @@ Report with the four-state table from `verify`. "Scaffolded" is not "works".
 Before the first public deploy, run the `launch` skill. Add `/privacy` and `/terms`
 routes while scaffolding (copy Workout's; Eat has none yet), so that check does not
 start from a 404.
+
+## 6 — build it fast and safe from the first commit
+
+Two checklists apply to every Easeur product. Read them while scaffolding, not the week
+before launch: a skeleton screen or a paginated query costs minutes on day one and days
+later.
+
+- **`performance` skill, BUILD mode.** Read sections A, B and F plus each section whose
+  trigger fires, and build the first pages to them. Record first-load JS per route in
+  `BUILD_STATE.md` as the baseline.
+- **`security` skill.** Read Step 0 and Step 1 before adding sign-in, an AI call,
+  uploads or anything paid, so the feature is built on the right side of the line.
+
+Both run again in full, as checks, before the first public deploy. `launch` does not
+pass without them.

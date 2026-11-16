@@ -70,11 +70,12 @@ Section A always runs. The rest run when their trigger fires.
 | A9 | Every claim on the site is true and provable: uptime, security, certifications (SOC 2, ISO, HIPAA), "trusted by", medical or outcome claims | read the copy; each claim has a source |
 | A10 | No dark patterns: fake timers, fake scarcity, confirm-shaming, pre-ticked boxes, hidden costs, forced sign-up, hard-to-find cancel | walk the flows |
 | A11 | Accessibility, WCAG 2.1 AA: contrast, alt text, full keyboard path, visible focus, labels, reduced motion, 200% zoom | Lighthouse a11y + a keyboard-only pass |
-| A12 | Security floor: 0 critical / 0 high in `npm audit`, no secrets in the bundle, security headers, HTTPS only | audit output, grep of `out/` |
+| A12 | Security floor: 0 critical / 0 high in `npm audit`, no secrets in the bundle, security headers, HTTPS only. The full check (prompt injection, rate limits, spend caps, storage) is the `security` skill: its verdict is CLEAR, or this row is FAIL | audit output, grep of `out/`, the saved security report |
 | A13 | Abuse limits on every public write endpoint | rate-limit test |
 | A14 | Hidden or unfinished pages return a real 404, and are out of the sitemap | `curl -I` each one |
 | A15 | Public stage in `products.ts` matches reality | read `products.ts` |
 | A16 | Error and empty states exist; nightly watch or other alerting is on | run the watch once by hand |
+| A17 | Speed: the `performance` skill verdict is WITHIN BUDGET on the three most used pages | the saved performance report |
 
 ## B — accounts and personal data (T1)
 

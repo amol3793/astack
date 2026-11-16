@@ -61,6 +61,8 @@ suite. Patterns come from your own prompt history.
 | `web` | SEO, browser pass, visual review |
 | `design` | UI and UX work: register, dials, anti-slop floor, and which library to use for what |
 | `launch` | Pre-launch checklist: legal, privacy, consent, accessibility, honesty, past lessons |
+| `security` | Security and cost-abuse checklist: secrets, prompt injection, rate limits, storage, spend caps |
+| `performance` | Speed guidelines for every app, built in from day one, then measured against a budget |
 | `audit` | astack checking itself for rot |
 | `new-app` | Starting a new Easeur app: skeleton, CI, watch, and the five places it registers |
 | `caveman` | Terse output mode |

@@ -137,6 +137,34 @@ const RULES = [
       [3, /\b(make|get) (the |this |my )?[\w ]{0,30}(look|feel) (better|good|nicer|premium|smooth)/],
     ],
   ],
+  // Added 2026-11-16 (owner request). Sits before "launch" and scores 5 on its own name so
+  // "security review before launch" goes here, not to the legal checklist.
+  [
+    "security",
+    "run the security and cost-abuse checklist: secrets, prompt injection, rate limits, spend caps",
+    [
+      [5, /\bsecurity (review|check|checklist|audit|pass|posture)\b/],
+      [3, /\b(prompt injection|jailbreak|leaked (api )?keys?|api abuse|credit abuse|card testing|pen ?test)\b/],
+      [3, /\b(burning|abusing|draining) (my |our |the )?(api )?(credits|quota|budget)\b/],
+      [3, /\bis (it|this|\w+) (secure|hackable|safe from (attack|abuse))\b/],
+      [3, /\bharden (the |this |my )?\w+/],
+      // Weak alone on purpose: "add a rate limit to this route" is ordinary coding.
+      [2, /\b(rate.?limit(s|ing)?|spend(ing)? (cap|limit)|kill switch)\b/],
+    ],
+  ],
+  // Added 2026-11-16 (owner request). No "make X faster" pattern on purpose: "make the
+  // query faster to read" is not a speed complaint. Lighthouse and Core Web Vitals stay
+  // with "web".
+  [
+    "performance",
+    "apply the performance guidelines, measure against the budget, and report with evidence",
+    [
+      [5, /\bperformance (review|check|checklist|audit|budget|guidelines?|pass)\b/],
+      [3, /\b(feels?|is|are|so|too|really|very) (slow|sluggish)\b/],
+      [3, /\b(slow to load|loads? slow(ly)?|page speed|speed check|load(ing)? time|bundle size|n\+1)\b/],
+      [3, /\b(skeleton (loader|loading|screen)s?|lazy.?load(ing)?|virtuali[sz]e)\b/],
+    ],
+  ],
   [
     "launch",
     "run the pre-launch checklist: legal, privacy, accessibility, honesty, past lessons",

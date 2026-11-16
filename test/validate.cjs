@@ -355,6 +355,17 @@ const ROUTES = [
   ["is workout ready to launch?", "launch"],
   ["do we need a cookie banner on the landing page", "launch"],
   ["add a privacy policy and terms of service to eat", "launch"],
+  // Security skill, added 2026-11-16 (owner request).
+  ["run a security review on eat before launch", "security"],
+  ["do a security check of the workout ai feature", "security"],
+  ["is the chat open to prompt injection", "security"],
+  ["someone is burning my api credits", "security"],
+  ["is it secure enough to open up", "security"],
+  // Performance skill, added 2026-11-16 (owner request).
+  ["run a performance check on workout before launch", "performance"],
+  ["the train page feels slow on my phone", "performance"],
+  ["eat is slow to load on mobile data", "performance"],
+  ["the bundle size went up after that change", "performance"],
 ];
 
 for (const [prompt, want] of ROUTES) {
@@ -426,6 +437,8 @@ const REAL_SILENT = [
   // Design words that also mean something else (2026-11-16).
   "the state transition in the reducer is wrong",
   "make the query faster and smoother to read",
+  // Ordinary coding that mentions a security word (2026-11-16).
+  "what does the rate limit header say",
 ];
 
 for (const prompt of REAL_SILENT) {
@@ -476,6 +489,87 @@ check("launch checklist keeps every required item", () => {
   ];
   const missing = need.filter((t) => !body.includes(t));
   return missing.length ? "missing: " + missing.join(", ") : null;
+});
+
+// The security checklist must keep every item from the two lists Amol supplied
+// (2026-11-16): AI prompt-injection hardening and API cost abuse. A term going missing
+// here means a security rule was dropped.
+check("security checklist keeps every required item", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "security", "SKILL.md"), "utf8").toLowerCase();
+  const need = [
+    // AI feature hardening
+    "server environment variables", "xml tags", "prompt injection filter", "hostile",
+    "max_tokens", "user id comes from the session", "hidden text", "timeout", "allowlist",
+    "tool argument", "runs on the server", "no write access", "input length",
+    "confirm button", "rate limit", "canary token", "fails the schema",
+    "row-level security", "sanitized before rendering", "personal data masked",
+    "user role", "markdown images", "prompt injection attacks",
+    // cost abuse
+    "frontend code", "revoked and replaced", "bot checks", "fake signups", "daily quota",
+    "chat history", "test and prod keys", "paid access is verified", "card testing",
+    "per ip", "verification emails", "locked server-side", "output tokens",
+    "third-party api calls", "simultaneous requests", "duplicate billable",
+    "quota is reserved", "retries are capped", "upload size", "zip bombs",
+    "signed expiring", "public rights on storage", "temp files", "log retention",
+    "recursive function triggers", "job has a timeout", "overlap", "batch sizes",
+    "concurrency are capped", "tracked by user", "spikes", "before the budget",
+    "budget runs out", "kill switch", "parallel requests",
+  ];
+  const missing = need.filter((t) => !body.includes(t));
+  return missing.length ? "missing: " + missing.join(", ") : null;
+});
+
+// BYOK in the browser is an owner decision (workout D134). The skill must not turn
+// "move every AI call to the server" into an automatic FAIL for it, and must never
+// aim load or attack probes at production.
+check("security skill handles BYOK and keeps probes off production", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "security", "SKILL.md"), "utf8");
+  if (!/BYOK in the browser/.test(body)) return "no BYOK branch";
+  if (!/never\s+production/.test(body)) return "does not keep probes off production";
+  for (const s of ["PASS", "FAIL", "N/A", "ACCEPTED"]) if (!body.includes(s)) return "missing state " + s;
+});
+
+check("launch checklist points at the security skill", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "launch", "SKILL.md"), "utf8");
+  return /`security` skill/.test(body) ? null : "launch never sends the reader to the security skill";
+});
+
+// The performance guidelines must keep every item Amol supplied (2026-11-16). A term
+// going missing here means a guideline was dropped.
+check("performance guidelines keep every required item", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "performance", "SKILL.md"), "utf8").toLowerCase();
+  const need = [
+    "skeleton loading screens", "webp or avif", "duplicate api calls", "debounce",
+    "pagination", "through a cdn", "background job queue", "n+1", "brotli",
+    "cache frequently accessed data", "redis", "unused dependencies",
+    "timeouts for external api calls", "token by token", "before the server responds",
+    "lazy load images", "in parallel", "database indexes", "opentelemetry",
+    "close to the database", "at build time", "third-party scripts after the page",
+    "split javascript by page", "virtualize long lists", "only the columns you need",
+    "connection pooling", "unnecessary re-renders", "browser caching",
+    "load balance", "self-host fonts", "font weights", "real user speed",
+    "slow phones and networks",
+  ];
+  const missing = need.filter((t) => !body.includes(t));
+  return missing.length ? "missing: " + missing.join(", ") : null;
+});
+
+// Guards two things the owner's stack depends on: a static export is never told to add
+// Redis, a queue or a load balancer, and a fix is never made before a measurement.
+check("performance skill measures first and adds no infrastructure by default", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "performance", "SKILL.md"), "utf8");
+  if (!/Measure before you fix/.test(body)) return "no measure-first rule";
+  if (!/Never add infrastructure/.test(body)) return "no rule against adding infrastructure";
+  for (const t of ["LCP", "INP", "CLS"]) if (!body.includes(t)) return "budget missing " + t;
+});
+
+// "These should be part of all products": a new app is built to the guidelines from the
+// first commit, and launch does not pass without the check.
+check("new-app and launch both send the reader to the performance skill", () => {
+  for (const s of ["new-app", "launch"]) {
+    const body = fs.readFileSync(path.join(root, "skills", s, "SKILL.md"), "utf8");
+    if (!/`performance` skill/.test(body)) return s + " never names the performance skill";
+  }
 });
 
 check("launch law reference covers India, EU/UK and the US, and says it is not advice", () => {
