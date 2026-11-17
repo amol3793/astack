@@ -568,6 +568,41 @@ check("performance skill measures first and adds no infrastructure by default", 
   for (const t of ["LCP", "INP", "CLS"]) if (!body.includes(t)) return "budget missing " + t;
 });
 
+// Amol's UX list, 2026-11-17: twenty rules, each one must stay in the design skill.
+check("design skill keeps all twenty UX rules", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "design", "SKILL.md"), "utf8");
+  const need = [
+    "Reduce choices per screen", "Make targets large", "Follow familiar patterns",
+    "Group related information", "Break content into chunks", "Interactions within 400 ms",
+    "Highlight the primary action", "Place key actions nearby", "Put essentials first",
+    "End flows memorably", "Show visible progress", "Simplify complex interfaces",
+    "Use sensible defaults", "Prevent errors proactively", "Make errors recoverable",
+    "Maintain pattern consistency", "Connect related elements visually",
+    "Reduce task completion time", "Reveal complexity gradually", "Make completion feel closer",
+  ];
+  const missing = need.filter((t) => !body.includes(t));
+  if (missing.length) return "missing: " + missing.join(", ");
+  for (let i = 1; i <= 20; i++) if (!body.includes("| U" + i + " |")) return "no row U" + i;
+});
+
+// Design audit, 2026-11-17: rules outside the workflow are not applied. BUILD must send
+// the reader through the UX rules, the HIG habits and Scale, and CRITIQUE must end in a
+// report with evidence. The HIG block must stay dated and name where it was read.
+check("design skill applies its rules in BUILD and reports them in CRITIQUE", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "design", "SKILL.md"), "utf8");
+  if (!/Walk the main task before any code/.test(body)) return "BUILD has no main-task step";
+  if (!/U1-U20/.test(body) || !/H1-H10/.test(body)) return "BUILD or CRITIQUE does not name U1-U20 and H1-H10";
+  if (!/design critique:/.test(body) || !/Never write SOUND with a FAIL/.test(body)) return "no critique report";
+  if (!/INP 200 ms/.test(body)) return "U12 does not point at the INP budget";
+});
+
+check("design skill keeps the ten Apple HIG habits, dated and sourced", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "design", "SKILL.md"), "utf8");
+  for (let i = 1; i <= 10; i++) if (!body.includes("| H" + i + " |")) return "no row H" + i;
+  if (!/Human Interface Guidelines on \d{4}-\d{2}-\d{2}/.test(body)) return "no read date";
+  if (!body.includes("tutorials/data/design/human-interface-guidelines")) return "no source path";
+});
+
 // Owner rule, 2026-11-17: design for 1M users, stay on free tiers until there is revenue.
 // It must be in the spine (so every session and every skill has it by default), and the
 // skill must keep its two halves: no rewrite to scale, no paying before revenue.
