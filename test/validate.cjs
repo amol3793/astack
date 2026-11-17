@@ -366,6 +366,11 @@ const ROUTES = [
   ["the train page feels slow on my phone", "performance"],
   ["eat is slow to load on mobile data", "performance"],
   ["the bundle size went up after that change", "performance"],
+  // Scale skill, added 2026-11-17 (owner rule).
+  ["will this design handle 1m users", "scale"],
+  ["are we still inside the supabase free tier", "scale"],
+  ["do we need to upgrade the plan for wear", "scale"],
+  ["how many users can eat sync handle", "scale"],
 ];
 
 for (const [prompt, want] of ROUTES) {
@@ -561,6 +566,44 @@ check("performance skill measures first and adds no infrastructure by default", 
   if (!/Measure before you fix/.test(body)) return "no measure-first rule";
   if (!/Never add infrastructure/.test(body)) return "no rule against adding infrastructure";
   for (const t of ["LCP", "INP", "CLS"]) if (!body.includes(t)) return "budget missing " + t;
+});
+
+// Owner rule, 2026-11-17: design for 1M users, stay on free tiers until there is revenue.
+// It must be in the spine (so every session and every skill has it by default), and the
+// skill must keep its two halves: no rewrite to scale, no paying before revenue.
+check("spine carries the scale and free-tier rule", () => {
+  const body = fs.readFileSync(path.join(root, "context", "spine.md"), "utf8");
+  if (!/1M users/.test(body)) return "no 1M users rule";
+  if (!/free tiers/.test(body)) return "no free-tier rule";
+  if (!/`scale` skill/.test(body)) return "does not name the scale skill";
+});
+
+check("scale skill keeps the free-tier gate and the honest ceiling", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "scale", "SKILL.md"), "utf8");
+  const need = [
+    "never the architecture", "until the app has paying users", "capacity sheet",
+    "50,000", "100,000", "500 MB", "plan change", "Amol confirms",
+    "Never propose a paid plan", "first wall", "free-tiers.md",
+  ];
+  const missing = need.filter((t) => !body.includes(t));
+  return missing.length ? "missing: " + missing.join(", ") : null;
+});
+
+// A limit with no source or date is a guess. The table must say when it was read and
+// when to read it again, and cover the three vendors Easeur runs on.
+check("free-tier limits are dated, sourced and cover all three vendors", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "scale", "free-tiers.md"), "utf8");
+  if (!/Read from the vendors' own pages on \*\*\d{4}-\d{2}-\d{2}\*\*/.test(body)) return "no read date";
+  if (!/Re-check after \*\*\d{4}-\d{2}-\d{2}\*\*/.test(body)) return "no re-check date";
+  for (const t of ["Cloudflare", "Supabase", "GitHub", "developers.cloudflare.com", "supabase.com/pricing", "docs.github.com", "Not read yet"])
+    if (!body.includes(t)) return "missing: " + t;
+});
+
+check("product, design and new-app all send the reader to the scale skill", () => {
+  for (const s of ["product", "design", "new-app"]) {
+    const body = fs.readFileSync(path.join(root, "skills", s, "SKILL.md"), "utf8");
+    if (!/`scale` skill/.test(body)) return s + " never names the scale skill";
+  }
 });
 
 // "These should be part of all products": a new app is built to the guidelines from the

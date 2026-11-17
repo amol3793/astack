@@ -107,15 +107,19 @@ start from a 404.
 
 ## 6 — build it fast and safe from the first commit
 
-Two checklists apply to every Easeur product. Read them while scaffolding, not the week
+Three checklists apply to every Easeur product. Read them while scaffolding, not the week
 before launch: a skeleton screen or a paginated query costs minutes on day one and days
 later.
 
+- **`scale` skill, first.** The app starts in the default shape (static export, data on
+  the device first, browser to Supabase under RLS) on free tiers only. Fill the capacity
+  sheet for the app's core feature and put it in `BUILD_STATE.md`. Do not create a paid
+  resource, and count Supabase free projects before asking for a new one.
 - **`performance` skill, BUILD mode.** Read sections A, B and F plus each section whose
   trigger fires, and build the first pages to them. Record first-load JS per route in
   `BUILD_STATE.md` as the baseline.
 - **`security` skill.** Read Step 0 and Step 1 before adding sign-in, an AI call,
   uploads or anything paid, so the feature is built on the right side of the line.
 
-Both run again in full, as checks, before the first public deploy. `launch` does not
+All three run again in full, as checks, before the first public deploy. `launch` does not
 pass without them.

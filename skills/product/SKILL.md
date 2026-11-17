@@ -89,7 +89,24 @@ Minimise collection. Minimise external sharing. Privacy is the moat, not the cop
 `consents`, `audit_log` and `deletion_jobs` exist so "your data stays yours" is
 enforceable.
 
-## Step 5 — MVP split, then record it
+## Step 5 — the scale and cost test
+
+Every feature is designed for 1M users and paid for by none of them yet. Work through
+each line; the `scale` skill has the limits, the design rules and the capacity sheet.
+
+```
+  Does it fit the default shape?         static, local first, browser to Supabase
+  What does it store per user?           bytes, on the server, with a cap
+  What runs per request on a server?     if anything, why not on the device or at build
+  Which free limit breaks first?         a limit and a user count, not "it should be fine"
+  What is the step past that wall?       a plan change, never a rewrite
+  Does it need a paid service today?     then it waits for revenue, or gets redesigned
+```
+
+A feature that needs a paid tier before the app has paying users is not ready. Say so,
+and offer the version that fits.
+
+## Step 6 — MVP split, then record it
 
 ```
   MUST          it does not work without this
@@ -101,7 +118,7 @@ enforceable.
 Write the decision to `BUILD_STATE.md` as a D-entry: what was chosen, what was rejected, why,
 and what would reopen it. The next session inherits the reasoning instead of relitigating.
 
-## Step 6 — check it against the catalogue
+## Step 7 — check it against the catalogue
 
 Public stage lives in one place: `src/data/products.ts` in the landing page. If this
 work changes what an app actually is, the catalogue entry is part of the work. A stage

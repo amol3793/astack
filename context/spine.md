@@ -64,6 +64,18 @@ caller. No fix lands before the root cause is named.
 **Scope check.** Before finishing, compare what was asked against what the diff does.
 Report `CLEAN`, `DRIFT` (extra work not requested), or `MISSING` (requirements dropped).
 
+## Scale and cost rules
+
+**Design for 1M users, pay for none of them yet** (owner rule, 2026-11-17).
+
+- Going from 0 to 1M users changes a plan or a config, never the architecture.
+- Cloudflare, Supabase and GitHub stay on **free tiers** until an app has paying users.
+  Never propose a paid plan or vendor as the first answer to a limit: redesign first.
+- Default shape: static export, data on the device first, the browser talking to
+  Supabase under RLS. Per-request server code needs a written reason.
+- Before adding a table, endpoint, job, upload or vendor, use the `scale` skill: name
+  which free limit breaks first, and at how many users.
+
 ## Safety
 
 - Cloudflare is **read-only** unless Amol confirms the specific change after being told

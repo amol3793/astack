@@ -92,7 +92,8 @@ weight is costing you on every turn forever.
 Dead ends older than about six months, or about a platform that has since changed, get
 pruned. A lessons file nobody reads is the failure mode that left
 `~/.claude/skills/learned/` empty. Also check `skills/launch/laws.md`: any date past
-its re-check line gets looked up again.
+its re-check line gets looked up again. Same for `skills/scale/free-tiers.md`: past its
+re-check date, every limit is read again from the vendor's page.
 
 ## 6 — check what upstream changed
 

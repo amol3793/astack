@@ -165,6 +165,18 @@ const RULES = [
       [3, /\b(skeleton (loader|loading|screen)s?|lazy.?load(ing)?|virtuali[sz]e)\b/],
     ],
   ],
+  // Added 2026-11-17 (owner rule: design for 1M users, free tiers until revenue).
+  [
+    "scale",
+    "check the design scales to 1M users and stays on free tiers until there is revenue",
+    [
+      [4, /\b(scalab\w+|scale (to|up|check)|capacity (check|sheet|plan))\b/],
+      [4, /\b(free tiers?|free plan|paid (tier|plan)s?|upgrade (the |our |my )?(plan|tier))\b/],
+      [3, /\b(1m|10k|100k|\d+ ?million|million) users\b/],
+      [3, /\bhow many users (can|will|could)\b/],
+      [3, /\b(supabase|cloudflare|workers|github) (limits?|quota|pricing|pro)\b/],
+    ],
+  ],
   [
     "launch",
     "run the pre-launch checklist: legal, privacy, accessibility, honesty, past lessons",

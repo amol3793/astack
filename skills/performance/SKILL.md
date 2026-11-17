@@ -30,7 +30,8 @@ Rules:
   budget blocks launch.
 - **Never add infrastructure to turn a row green.** A static export needs no Redis, no
   queue, no load balancer and no tracing backend. Those rows are N/A until their
-  trigger fires, and "we might need it later" is not a trigger.
+  trigger fires, and "we might need it later" is not a trigger. Anything paid goes
+  through the `scale` skill first: free tiers only until the app has revenue.
 - Never mark PASS from memory or from the framework's reputation. "Next does that by
   default" is checked in the built output and the response headers.
 - Load and stress probes run on a local or preview build, never production.

@@ -106,6 +106,14 @@ replacement, copy that describes the feature instead of the user's gain.
 - Empty, loading, error and offline states exist for every list and every fetch.
 - Both themes checked if the surface has both.
 
+## Scale — design the screen for the 1M-user version
+
+A screen that works with 20 rows and one user is half designed. Before BUILD, answer:
+what does this look like with 10,000 items, and what does it ask a server for? Lists are
+paginated or virtualised, images come as static assets, and nothing on the screen needs
+a paid service or a per-request server. The `scale` skill has the free-tier limits and
+the `performance` skill has the build guidelines.
+
 ## CRITIQUE
 
 Findings worst first, each with the file that owns it. Use the `review` confidence rule:
