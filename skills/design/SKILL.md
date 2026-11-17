@@ -68,8 +68,9 @@ and treat the old look as an anti-reference, never as a base to polish.
 1. **Inspect what exists first.** Existing tokens, `DESIGN.md`, components, Tailwind
    config. A missing `DESIGN.md` does not mean greenfield.
 2. **Walk the main task before any code.** Write the steps a user takes to finish the
-   one job of this screen, then run them against the UX rules (U1-U20), the HIG habits
-   (H1-H10) and the Scale question below. Fix the flow on paper; it is cheapest there.
+   one job of this screen, then run them against the UX rules (U1-U24), the HIG habits
+   (H1-H10) and the Scale question below. Draw every component to the craft rules
+   (C1-C10) and give each touch its motion answer (M1-M6, A1-A12). Fix the flow on paper; it is cheapest there.
 3. **Use the real system when the brief names one.** shadcn, Radix, Material, Fluent:
    install the official package, do not hand-recreate its CSS, and do not import a
    system's tokens then override most of them. One system per project.
@@ -109,6 +110,113 @@ replacement, copy that describes the feature instead of the user's gain.
   final state, focus and content must stay correct.
 - Empty, loading, error and offline states exist for every list and every fetch.
 - Both themes checked if the surface has both.
+
+## Component craft — how the pieces are drawn (owner list, 2026-11-17)
+
+Ten details that separate a built component from a sloppy one. BUILD applies them,
+CRITIQUE checks them at level 7 (craft). Each check is something you can grep or see.
+
+| # | Rule | Do | Check |
+|---|---|---|---|
+| C1 | Nested radii differ | inner radius = outer radius minus the padding between them (never below 0) | no child with the same `border-radius` as its padded parent; a token or `calc(var(--r-outer) - var(--pad))` |
+| C2 | Alpha borders | borders and dividers use a translucent colour (`oklch(0 0 0 / 0.1)` on light, `oklch(1 0 0 / 0.1)` on dark) so they blend into any background | no solid hex border on a surface that can change colour |
+| C3 | OKLCH, not HSL | colour tokens are written in `oklch()`; lightness steps match what the eye sees | no new `hsl()` in tokens or Tailwind config |
+| C4 | Gradients interpolate in OKLCH | `linear-gradient(in oklch, a, b)` so the middle stays vivid, not grey | every gradient with two saturated ends carries `in oklch` |
+| C5 | Icon stroke matches text weight | a thin icon beside bold text looks sloppy: raise the stroke with the font weight (for example 1.5 beside regular, 2 beside semibold) | set stroke from one token, not per icon |
+| C6 | Mask carousel edges | a scroller that clips content fades it out with `mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent)` instead of a hard cut | every horizontal scroller shows a fade at the clipped edge; it disappears at the scroll ends |
+| C7 | Soften icon swaps | when an icon changes (copy to check, play to pause) cross-fade with scale, 150-200 ms; blur per X1 | a swapped icon never pops; honours `prefers-reduced-motion` |
+| C8 | Dark-mode depth is lightness | shadows barely show on dark, so raise a surface by making it lighter (page, surface, raised) | no dark-mode card that relies on `box-shadow` alone to separate from the page |
+| C9 | `dvh`, not `vh` | full-screen layouts use `100dvh` (or `svh` / `lvh` by intent) so Safari's moving toolbar does not clip them | no `100vh` on a mobile-facing layout |
+| C10 | Multiply white product shots | an image with a white background on a light surface gets `mix-blend-mode: multiply` so the white vanishes | no visible white box around a product photo; not used on dark surfaces, where multiply turns the image dark |
+
+Notes that keep these consistent with the rest of the skill:
+
+- C7's blur conflicts with "animate `transform` and `opacity` only": see conflict X1,
+  which gives two choices.
+- C2, C3 and C8 belong in the tokens (SYSTEM), so a component never hardcodes them.
+- C3 to C4 together mean colour is defined and blended in one space; do not mix HSL
+  tokens with OKLCH gradients.
+
+## Motion feel — the six micro-interactions (owner list, 2026-11-17)
+
+Why premium apps feel smooth: every touch gets a physical answer. These are small,
+fast and purposeful, so they fit Operate screens as well as Persuade ones. Build them
+with Motion (`motion/react`), the default engine in "Where to use what".
+
+| # | Moment | Behaviour | Numbers | Check |
+|---|---|---|---|---|
+| M1 | Button press | scales down to 95% on press, springs back on release; the squish tells the thumb the tap landed | `scale: 0.95`; press about 100 ms, release a short spring, overshoot per X2 | every primary and icon button reacts to press, not only to hover |
+| M2 | Pull to refresh | the finger travels the full distance, the list follows only part of it; the resistance makes it feel real | list moves 35% of finger travel | list offset is about a third of the drag; it snaps back on release |
+| M3 | Number change | when a total changes, the digits roll into place one after another instead of swapping | staggered per digit, tabular figures, 300-500 ms | a changed total animates; the final value is in the DOM and read by assistive tech at once |
+| M4 | Drag to reorder | the picked row lifts and grows 5% while the other rows slide out of its way, like moving a real card | `scale: 1.05`, layout animation on siblings | siblings animate to their new slots; a keyboard or button path does the same move (H10) |
+| M5 | Card expand | fast at first, then slowing down | ease-out, 350 ms (cap per X3) | expanding card uses ease-out, not linear or ease-in-out |
+| M6 | Success | the circle draws first, then the tick; watching it finish makes the moment feel done | SVG `pathLength` 0 to 1, circle then tick, about 400-600 ms total (cap per X3) | the check is drawn in sequence, not shown whole; ends on the completed state (U18) |
+
+How these sit with the rest of the skill:
+
+- **Conflicts.** M1 (spring), M5 and M6 (duration) and the dial budget collide with
+  existing rules. Each is settled in the next section, X1 to X4, with two choices.
+- **Properties.** Animate `transform` and `opacity`. For M5 and M4 use a layout
+  animation (transform-based), not `height` or `top`. M6 draws an SVG stroke.
+- **Reduced motion.** With `prefers-reduced-motion`, drop the squish, the roll and the
+  draw to an instant state change or a plain fade. The result, focus and content stay
+  correct. Pull to refresh keeps its resistance because it follows the finger.
+- **Cost.** Test at 400px on a throttled CPU; a dropped frame in any of these is a defect.
+
+## Animation principles — the twelve, translated for UI (owner list, 2026-11-17)
+
+The classic twelve principles of animation, read as UI rules. M1-M6 are the concrete
+moments; these are the reasons behind them and apply to any motion that is not on that
+list. BUILD uses them to design a transition, CRITIQUE checks them at level 7.
+
+| # | Principle | In a UI | Check |
+|---|---|---|---|
+| A1 | Anticipation | a small counter-move before the main one tells the eye what is about to happen: a press dips before the action fires, a row lifts before it is dragged, a sheet nudges before it opens | the big move is never the first thing the user sees; see X6 for how long it may take |
+| A2 | Windup | the bigger the action, the more it charges first: pull to refresh stretches before it fires, a long press fills a ring, swipe-to-delete reveals as the drag grows | the charge grows with the gesture and is cancellable; it is the gesture itself, so it adds no delay (X6) |
+| A3 | Staging the focus | one thing leads at a time; dim, blur or hold still everything else so the eye knows where to look | at any moment one element moves with purpose; a modal dims what is behind it; no two unrelated things animate together |
+| A4 | Pose to pose | define the key states first (start, end, at most one in between) and let the engine tween them; do not hand-animate every frame | each transition is written as two or three named states, not a chain of timeouts |
+| A5 | Follow-through | parts settle after the main body stops: sheet content settles a beat after the sheet lands, a list trails its container, a dropped item eases into place | nothing stops dead; the settle is finite and about 100 ms or less |
+| A6 | Slow in, slow out | movement eases at the start and the end; position and size are never linear | no `linear` on a moving element, only on opacity and colour; see X7 for which ease |
+| A7 | Moving in arcs | things that travel between two points follow a curve, not a straight line: an item flying to the cart, a button morphing into a sheet | travel across the screen uses different easing on x and y, so the path bends |
+| A8 | Secondary action | one small supporting motion backs the main one: the cart count ticks as the item lands, the icon fills as the button squishes | at most one secondary action per primary; it never competes with it or outlasts it |
+| A9 | Snappy timing | quick to start, quick to finish; timing carries weight, so small things move faster than large ones | UI motion is 150-300 ms (X3 for the exceptions); a small control never takes longer than a large panel |
+| A10 | Exaggerated feedback | make the response a little bigger than the event so it registers, sized to how much the event matters | a saved set and a deleted workout do not get the same feedback; see X5 for how far to push |
+| A11 | Solid drawing in 3D | shapes keep volume, perspective and light: one light direction for every shadow, one elevation scale, and a raised element casts a larger, softer shadow | all shadows in the app share one angle; elevation steps are tokens; no flat element rotates as if it had depth |
+| A12 | Overall appeal | the sum feels designed: one personality, one family of curves and durations used everywhere | easings and durations come from tokens; play the motion at normal speed and at quarter speed, and nothing looks accidental |
+
+Notes:
+
+- The source list read "Pose oppose" and "Windup". They are taken as *pose to pose* (A4)
+  and as a stronger form of anticipation (A2). Amol can correct either reading.
+- A11 is the in-UI half of C8 (dark-mode depth is lightness) and applies to Experience
+  surfaces with real 3D (`img2threejs`, three). On flat Operate screens it means
+  consistent shadows and elevation only.
+- Every principle holds under `prefers-reduced-motion` by reducing to an instant state
+  change or a fade. Four of them (A1, A2, A5, A8) are decoration if they are removed, so
+  drop them first.
+
+## Conflicts — two choices (owner rules against the floor)
+
+Where an owner rule above contradicts an older rule in this skill, there are two choices,
+not a silent winner. **Choice A keeps the older rule. Choice B follows the owner's rule
+literally.** Default to A. Take B only when the surface fits its "Use B when" column,
+and write the choice in the READ line, for example
+`register Persuade, dials 7 / 6 / 4, conflicts X1=B X2=B`. CRITIQUE then checks the
+screen against the choice it claimed. Amol can flip a default by editing this table.
+
+| # | Conflict | Choice A (default, keeps the older rule) | Choice B (owner rule, literal) | Use B when |
+|---|---|---|---|---|
+| X1 | C7 icon-swap blur against "animate `transform` and `opacity` only" | cross-fade with scale and opacity, no blur | add a small blur to the cross-fade, 200 ms or less, small icons only, never on large or repeating elements | a Persuade or Experience surface where the swap is a showpiece, MOTION 5 or more, and the throttled-CPU check at 400px shows no dropped frame |
+| X2 | M1 spring-back against the ban on bounce and elastic easing | critically damped spring: settles at once, never passes rest | a real spring with at most about 3% overshoot past rest | Bold-playful style, MOTION 5 or more, never on Health or trust-first surfaces |
+| X3 | M5 (350 ms) and M6 (400-600 ms) against "UI stays at 150-300 ms" | cap both at 300 ms: M5 ease-out 300 ms, M6 circle then tick in about 300 ms | the owner's numbers: M5 350 ms, M6 400-600 ms, each a one-off moment, never a loop | the moment is a one-off reward (first success, a finished flow, U18) and not a step the user repeats within a task |
+| X4 | M1-M6 against "MOTION 1 to 3 = hover and focus states only" | at MOTION 3 or less allow only M1 (press) and M6 (success); the rest wait for MOTION 4 or more | allow all six at any MOTION of 2 or more, including every Operate screen | Operate screens where feel is part of the job (Train, a logged set, a reorderable list) and the dials were set deliberately |
+| X5 | A10 exaggerated feedback against the ban on bounce and elastic easing, and the calm of trust-first surfaces | feedback sized to the event, with a clear change of scale (up to 1.05) or colour and no overshoot | pronounced feedback: scale up to 1.15, overshoot allowed as in X2, a bright colour pop | a reward moment on Bold-playful or Persuade, MOTION 5 or more, never on Health or on errors |
+| X6 | A1 anticipation and A2 windup against U12 (every tap answers within 400 ms) | anticipation is part of the response: 80 ms or less, and the result starts right after; windup only through a gesture the user is already making (drag, pull, long press), so nothing is delayed | a timed windup of 100-200 ms before the result, total still inside 400 ms | a one-off showpiece moment, MOTION 6 or more, never on a tap the user repeats within a task |
+| X7 | A6 slow in, slow out (ease-in-out) against M5 "ease-out, not ease-in-out" | ease-out for anything the user's touch starts (expanding, opening, entering); ease-in-out only for an element moving between two on-screen spots by itself | ease-in-out for all movement, M5 included | Experience or Persuade surfaces, where the motion is not a direct answer to a touch |
+| X8 | U24 frequency of use against M1-M6 at full strength | an action repeated more than about 10 times in a session gets an instant or 100 ms response; M3 (roll) and M6 (draw) are skipped for it | keep M1-M6 at full strength however often the action repeats | the repeat is itself the reward loop and the surface is Bold-playful, set deliberately |
+
+Not conflicts: M2 (pull to refresh keeps its resistance under reduced motion because it
+follows the finger) and M3 (the final value is in the DOM at once) hold under both choices.
 
 ## UX rules — how the screen behaves (owner list, 2026-11-17)
 
@@ -160,6 +268,28 @@ before hierarchy or craft. A rule is met when the check passes, not when it soun
 | U19 | Prevent errors proactively | constrain the input (picker over free text, disabled until valid, inline validation) before the user can submit a mistake |
 | U20 | Make errors recoverable | every destructive action has undo or a confirm; an error message says what happened and what to do, and keeps what was typed |
 
+**Laws of UX** (owner list, 2026-11-17)
+
+Four of the laws are new rules. The others are already enforced by an earlier rule, so
+they are mapped, not repeated.
+
+| # | Rule | Check |
+|---|---|---|
+| U21 | Fitts' law: time to hit a target grows with distance and shrinks with size. Put what is used most near where the thumb or pointer already is, make it large, and use the screen edges and bottom thumb zone | the primary action sits in thumb reach on a phone; no small target far from the content it acts on |
+| U22 | Bigger hit areas: the tappable region can be larger than what is drawn. Pad it with padding or a pseudo-element, make the whole row tappable, and keep neighbouring hit areas from overlapping | tap just outside a small icon and it still works; an icon that looks 20 px has a 44 px target (U7) |
+| U23 | Postel's law (the paste read "Pastel's"): be liberal in what you accept and strict in what you output. Take input in the shapes people really type, store and show one canonical form | paste `  +91 98765-43210 ` or a date in three formats and the form accepts it, trims it and shows one format |
+| U24 | Frequency of use: the action done most often is the cheapest, with the fewest taps, the shortest animation and no confirm; rare actions may cost more steps | rank the screen's actions by how often they run; the top three take two taps or fewer; see X8 for motion |
+
+Already covered by an earlier rule. The `Dolpherty threshold` in the paste is the
+*Doherty threshold*.
+
+| Law | Where it is enforced |
+|---|---|
+| Hick's law: more choices, slower decision | U1, U4, U5 |
+| Miller's law: short-term memory holds a handful of items | U11 (chunks of about 3 to 5, stricter than "7 plus or minus 2") |
+| Jacob's law: people expect your app to work like the others they use | U13, U14 |
+| Doherty threshold: respond within about 400 ms and the user stays in flow | U12 (400 ms ceiling, INP 200 ms to measure) |
+
 When two rules pull apart (U1 against U15: fewer choices per screen can mean more
 screens), the main task's total time decides. The Operate register leans to U15, the
 Persuade register to U1.
@@ -201,13 +331,13 @@ Findings worst first, each with the file that owns it. Use the `review` confiden
 if you cannot quote the line or point at the pixel, suppress it.
 
 ```
-  1  does it do the job          task completes, primary action obvious, U1-U20, H1-H10
+  1  does it do the job          task completes, primary action obvious, U1-U24, H1-H10
   2  hierarchy                   one thing reads first, then second
   3  consistency                 same thing looks the same everywhere
   4  states                      hover, focus, disabled, empty, error, loading
   5  accessibility               contrast, focus order, labels, motion
   6  responsive                  400px, 768px, 1440px
-  7  craft                       spacing rhythm, alignment, type scale
+  7  craft                       spacing rhythm, alignment, type scale, component craft C1-C10, motion feel M1-M6, animation principles A1-A12
   8  slop                        the floor above
 ```
 
@@ -222,7 +352,7 @@ Report in this shape. A rule is listed as checked only with its evidence.
   Main task   log a set: 4 taps, 1 field
   FAIL        U6   two primary buttons on /train            TrainHeader.tsx:41
               H5   closing the note sheet drops typed text  NoteSheet.tsx:88
-  PASS        U1-U5, U7-U20, H1-H4, H6-H10 (evidence below)
+  PASS        U1-U5, U7-U24, H1-H4, H6-H10 (evidence below)
   Not checked level 7 craft: stopped at level 1
 
   Verdict     FIX FIRST: U6   |   SOUND
