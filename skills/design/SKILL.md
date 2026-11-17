@@ -70,7 +70,7 @@ and treat the old look as an anti-reference, never as a base to polish.
 2. **Walk the main task before any code.** Write the steps a user takes to finish the
    one job of this screen, then run them against the UX rules (U1-U24), the HIG habits
    (H1-H10) and the Scale question below. Draw every component to the craft rules
-   (C1-C10) and give each touch its motion answer (M1-M6, A1-A12, R1-R20). Fix the flow on paper; it is cheapest there.
+   (C1-C10), clear of the dashboard tells (T1-T5) on a data screen, and give each touch its motion answer (M1-M6, A1-A12, R1-R20). Fix the flow on paper; it is cheapest there.
 3. **Use the real system when the brief names one.** shadcn, Radix, Material, Fluent:
    install the official package, do not hand-recreate its CSS, and do not import a
    system's tokens then override most of them. One system per project.
@@ -99,6 +99,33 @@ Reject on sight, whoever wrote it:
 Plus the ones no linter catches: a heading hierarchy that disagrees with visual weight,
 a control with no hover, focus or disabled state, a removed focus ring with no
 replacement, copy that describes the feature instead of the user's gain.
+
+On a dashboard or any data screen, also the five tells T1-T5 below.
+
+## Dashboard tells — five signs a data screen was generated (owner list, 2026-11-17)
+
+A generated dashboard decorates where it has nothing to say. BUILD avoids these;
+CRITIQUE checks T3 at level 2 (hierarchy) and the rest at level 8 (slop).
+
+| # | Tell | Fix | Check |
+|---|---|---|---|
+| T1 | Gradient as decoration: purple to blue on the header, the button, the chart fill | one flat accent colour, used for one meaning (the primary action, the selected state), so colour means something | no `linear-gradient` on a dashboard header, button or chart area |
+| T2 | An icon on a pastel tile, one colour per card (blue, green, purple, orange) | drop the tiles. The number is the hero. Four colours for four numbers is decoration, not information; colour is kept for status, and status also carries a sign or a word (Resilience) | no icon tile on a metric card; no card colour that encodes nothing |
+| T3 | Identical cards: same size, same weight, same green badge. A dashboard with no hierarchy is a spreadsheet with padding | one primary metric, big; about three secondary, small. The eye lands once | the primary figure is the largest text on the screen after the page title; a squint shows one thing first |
+| T4 | 16 px corners and a drop shadow on everything: cards, inputs, badges, the chart. When every card floats, nothing does | hairline borders (1 px, alpha per C2); a tighter radius on smaller parts (card, then input, then badge, per C1); `box-shadow` only on what opens above the page: menu, popover, dialog, toast | every `shadow` in the code sits on an overlay; no single radius token shared by every part |
+| T5 | Placeholder copy and numbers with no shape: "Welcome back Jordan 👋 +12.5% from last month." | no greeting filler or decorative emoji; name the period ("1-31 Oct vs Sep"); figures in `font-variant-numeric: tabular-nums`; the trend as a sparkline instead of a badge | every delta names its period; every metric figure is tabular; the sparkline has its value and period in text for assistive tech |
+
+Notes:
+
+- Scope is dashboards and data screens, in any register. T1 does not remove C4: where a
+  gradient survives on another surface (a Persuade hero), C4 says how to blend it.
+- T4 with A11 and C8: the elevation scale has two steps, flat (border) and overlay
+  (shadow). In dark mode the overlay lifts by lightness, not shadow alone.
+- T2 and T3 sharpen two floor items (the icon tile, three equal cards).
+- My addition, not in the paste: when the metrics are true peers (one measure across many
+  items), a table with tabular digits beats a row of equal cards. Amol can remove it.
+- Sparklines come from Bklit UI (see Where to use what).
+- None of the five contradicts an older rule, so there is no new conflict row.
 
 ## Resilience — the production failures
 
@@ -377,13 +404,13 @@ if you cannot quote the line or point at the pixel, suppress it.
 
 ```
   1  does it do the job          task completes, primary action obvious, U1-U24, H1-H10
-  2  hierarchy                   one thing reads first, then second
+  2  hierarchy                   one thing reads first, then second; T3 on a dashboard
   3  consistency                 same thing looks the same everywhere
   4  states                      hover, focus, disabled, empty, error, loading
   5  accessibility               contrast, focus order, labels, motion
   6  responsive                  400px, 768px, 1440px
   7  craft                       spacing rhythm, alignment, type scale, component craft C1-C10, motion feel M1-M6, animation principles A1-A12, motion recipes R1-R20
-  8  slop                        the floor above
+  8  slop                        the floor above, dashboard tells T1-T5
 ```
 
 Stop at the first level that is badly broken. Tuning craft on a screen whose primary
