@@ -70,7 +70,7 @@ and treat the old look as an anti-reference, never as a base to polish.
 2. **Walk the main task before any code.** Write the steps a user takes to finish the
    one job of this screen, then run them against the UX rules (U1-U24), the HIG habits
    (H1-H10) and the Scale question below. Draw every component to the craft rules
-   (C1-C10) and give each touch its motion answer (M1-M6, A1-A12). Fix the flow on paper; it is cheapest there.
+   (C1-C10) and give each touch its motion answer (M1-M6, A1-A12, R1-R20). Fix the flow on paper; it is cheapest there.
 3. **Use the real system when the brief names one.** shadcn, Radix, Material, Fluent:
    install the official package, do not hand-recreate its CSS, and do not import a
    system's tokens then override most of them. One system per project.
@@ -124,15 +124,15 @@ CRITIQUE checks them at level 7 (craft). Each check is something you can grep or
 | C4 | Gradients interpolate in OKLCH | `linear-gradient(in oklch, a, b)` so the middle stays vivid, not grey | every gradient with two saturated ends carries `in oklch` |
 | C5 | Icon stroke matches text weight | a thin icon beside bold text looks sloppy: raise the stroke with the font weight (for example 1.5 beside regular, 2 beside semibold) | set stroke from one token, not per icon |
 | C6 | Mask carousel edges | a scroller that clips content fades it out with `mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent)` instead of a hard cut | every horizontal scroller shows a fade at the clipped edge; it disappears at the scroll ends |
-| C7 | Soften icon swaps | when an icon changes (copy to check, play to pause) cross-fade with scale, 150-200 ms; blur per X1 | a swapped icon never pops; honours `prefers-reduced-motion` |
+| C7 | Soften icon swaps | when an icon changes (copy to check, play to pause) cross-fade with scale and a small blur, 150-200 ms (default, see X1) | a swapped icon never pops; honours `prefers-reduced-motion` |
 | C8 | Dark-mode depth is lightness | shadows barely show on dark, so raise a surface by making it lighter (page, surface, raised) | no dark-mode card that relies on `box-shadow` alone to separate from the page |
 | C9 | `dvh`, not `vh` | full-screen layouts use `100dvh` (or `svh` / `lvh` by intent) so Safari's moving toolbar does not clip them | no `100vh` on a mobile-facing layout |
 | C10 | Multiply white product shots | an image with a white background on a light surface gets `mix-blend-mode: multiply` so the white vanishes | no visible white box around a product photo; not used on dark surfaces, where multiply turns the image dark |
 
 Notes that keep these consistent with the rest of the skill:
 
-- C7's blur conflicts with "animate `transform` and `opacity` only": see conflict X1,
-  which gives two choices.
+- C7's blur conflicts with "animate `transform` and `opacity` only": see conflict X1.
+  Blur is the default there; X1 lists when to drop it.
 - C2, C3 and C8 belong in the tokens (SYSTEM), so a component never hardcodes them.
 - C3 to C4 together mean colour is defined and blended in one space; do not mix HSL
   tokens with OKLCH gradients.
@@ -195,18 +195,61 @@ Notes:
   change or a fade. Four of them (A1, A2, A5, A8) are decoration if they are removed, so
   drop them first.
 
+## Motion recipes — twenty exact settings (owner list, 2026-11-17)
+
+Concrete numbers for the common transitions. The principles above say why, these say how
+much. They are written for Motion (`motion/react`) but hold in plain CSS. Where one
+disagrees with an earlier rule, the row names the conflict (X9, X10) and gives two choices.
+
+| # | Recipe | Setting | Check |
+|---|---|---|---|
+| R1 | Entrances use ease-out | things appearing start fast and settle | no entrance with `linear` or `ease-in` |
+| R2 | Drop-downs 150-250 ms | menus, selects and popovers open in that window | measured open time inside 150-250 ms |
+| R3 | Stagger list rows by 30 ms | each row starts 30 ms after the one before; cap at about 8 rows so a long list does not crawl | total stagger is 240 ms or less; rows past the cap appear together |
+| R4 | Button press scale | `scale: 0.97` on press | see X9 for 0.97 against M1's 0.95 |
+| R5 | Stretch moving knobs by 12% | a toggle knob or slider thumb stretches 12% along its direction of travel while it moves, then returns to round | the knob is longer in motion and round at rest |
+| R6 | Stagger when details settle | the main element lands first, then its secondary details (badge, caption, icon) settle one after another | details never land on the same frame as the main element (A5, A8) |
+| R7 | Arcs for object movement | an object moving between two points follows a curve (the paste read "args", taken as *arcs*) | same as A7 |
+| R8 | A pulse confirms success | a short scale-and-ring pulse on the thing that succeeded | see X10 for the pulse against M6's draw |
+| R9 | Ease-in-out for on-screen movement | an element that moves from one place on screen to another eases at both ends | matches A6 and X7 Choice A |
+| R10 | Popovers start at scale 0.95 | open from `scale: 0.95` and opacity 0, never from 0 | no popover that grows from nothing |
+| R11 | Enter from the trigger | `transform-origin` is the trigger's position (the point the popover or menu hangs from), not the centre of the popover | open a popover from a corner button: it grows out of that button |
+| R12 | Exit to the trigger | on close it shrinks back toward the same origin it came from | close mirrors open |
+| R13 | Do not fade into the centre | an element never fades in at the middle of the screen when it belongs to a trigger or a place | nothing appears from nowhere |
+| R14 | No spring bounce in everyday UI | menus, tabs, toggles, sheets and list changes use eased tweens; springs are for gesture release and rare reward moments, and settle without overshoot unless X2 Choice B (the paste read "spring balance", taken as *spring bounce*) | no overshoot on an everyday transition |
+| R15 | Do not tween a gesture-driven movement | while a finger or pointer is down, the element tracks it 1:1 with no easing; ease or spring only after release (the paste read "handheld animation", taken as *gesture-driven*) | a dragged element never lags the finger |
+| R16 | Exits about 20% shorter than entrances | if an entrance is 200 ms, the exit is about 160 ms; leaving should feel quicker than arriving | exit duration is 0.8 times the entrance, give or take |
+| R17 | New state enters as the old one leaves | the two overlap (crossfade or shared transition) rather than one finishing before the other starts | no empty frame between the old state and the new one |
+| R18 | Give reveals and colour changes weight | a large reveal or a colour wash takes a longer, softer ease than a small control; in a spring, a larger mass (the paste read "mass", taken this way) | a full-panel reveal is slower than a button state change (A9) |
+| R19 | Crossfade icons with scale and blur | a swapped icon fades and scales, and blurs slightly | blur is the default, same as C7; X1 lists when to drop it |
+| R20 | Rubberband past drag boundaries | past the edge of a draggable range the element keeps moving at a shrinking ratio and springs back on release | dragging past an edge resists, never stops dead or runs free |
+
+Shared elements: give the same layout ID to the two instances of one object (a card and
+its opened sheet, a list thumbnail and its detail image) so the engine morphs one into the
+other. With Motion this is `layoutId`; reuse the ID on both sides.
+
+Notes:
+
+- Four of the pasted words were unclear: "args", "spring balance", "handheld animation"
+  and "mass". They are taken as shown in R7, R14, R15 and R18. Amol can correct any.
+- Everything here still honours `prefers-reduced-motion` (drop to a fade or an instant
+  change) and the `transform` and `opacity` property rule, subject to X1 for blur.
+- The paste was introduced as guidelines for "AI animations", but the items are general
+  UI motion, so they are filed here for every surface. They apply to AI features too
+  (a streaming-reply container, a generation-progress card) without special cases.
+
 ## Conflicts — two choices (owner rules against the floor)
 
 Where an owner rule above contradicts an older rule in this skill, there are two choices,
 not a silent winner. **Choice A keeps the older rule. Choice B follows the owner's rule
-literally.** Default to A. Take B only when the surface fits its "Use B when" column,
+literally.** Default to A, except where a row says otherwise (X1 defaults to B). Take B only when the surface fits its "Use B when" column,
 and write the choice in the READ line, for example
 `register Persuade, dials 7 / 6 / 4, conflicts X1=B X2=B`. CRITIQUE then checks the
 screen against the choice it claimed. Amol can flip a default by editing this table.
 
 | # | Conflict | Choice A (default, keeps the older rule) | Choice B (owner rule, literal) | Use B when |
 |---|---|---|---|---|
-| X1 | C7 icon-swap blur against "animate `transform` and `opacity` only" | cross-fade with scale and opacity, no blur | add a small blur to the cross-fade, 200 ms or less, small icons only, never on large or repeating elements | a Persuade or Experience surface where the swap is a showpiece, MOTION 5 or more, and the throttled-CPU check at 400px shows no dropped frame |
+| X1 | C7 and R19 icon-swap blur against "animate `transform` and `opacity` only". **Default is B** (owner decision, 2026-11-17: asked for twice) | cross-fade with scale and opacity, no blur | **default:** cross-fade with scale and a small blur, 200 ms or less, small icons only | use A, not B, when the throttled-CPU check at 400px drops a frame, when the element is large or repeats in a loop, or under `prefers-reduced-motion` |
 | X2 | M1 spring-back against the ban on bounce and elastic easing | critically damped spring: settles at once, never passes rest | a real spring with at most about 3% overshoot past rest | Bold-playful style, MOTION 5 or more, never on Health or trust-first surfaces |
 | X3 | M5 (350 ms) and M6 (400-600 ms) against "UI stays at 150-300 ms" | cap both at 300 ms: M5 ease-out 300 ms, M6 circle then tick in about 300 ms | the owner's numbers: M5 350 ms, M6 400-600 ms, each a one-off moment, never a loop | the moment is a one-off reward (first success, a finished flow, U18) and not a step the user repeats within a task |
 | X4 | M1-M6 against "MOTION 1 to 3 = hover and focus states only" | at MOTION 3 or less allow only M1 (press) and M6 (success); the rest wait for MOTION 4 or more | allow all six at any MOTION of 2 or more, including every Operate screen | Operate screens where feel is part of the job (Train, a logged set, a reorderable list) and the dials were set deliberately |
@@ -214,6 +257,8 @@ screen against the choice it claimed. Amol can flip a default by editing this ta
 | X6 | A1 anticipation and A2 windup against U12 (every tap answers within 400 ms) | anticipation is part of the response: 80 ms or less, and the result starts right after; windup only through a gesture the user is already making (drag, pull, long press), so nothing is delayed | a timed windup of 100-200 ms before the result, total still inside 400 ms | a one-off showpiece moment, MOTION 6 or more, never on a tap the user repeats within a task |
 | X7 | A6 slow in, slow out (ease-in-out) against M5 "ease-out, not ease-in-out" | ease-out for anything the user's touch starts (expanding, opening, entering); ease-in-out only for an element moving between two on-screen spots by itself | ease-in-out for all movement, M5 included | Experience or Persuade surfaces, where the motion is not a direct answer to a touch |
 | X8 | U24 frequency of use against M1-M6 at full strength | an action repeated more than about 10 times in a session gets an instant or 100 ms response; M3 (roll) and M6 (draw) are skipped for it | keep M1-M6 at full strength however often the action repeats | the repeat is itself the reward loop and the surface is Bold-playful, set deliberately |
+| X9 | R4 press scale 0.97 against M1 press scale 0.95 | 0.95 for touch targets and icon buttons, where the squish has to be felt through a thumb | 0.97 for a quieter press | large buttons, desktop pointer, dense toolbars, or Health and other trust-first surfaces |
+| X10 | R8 pulse to confirm success against M6 circle-then-tick draw | M6: draw the circle, then the tick, for a one-off completion (first success, end of a flow, U18) | pulse: a short scale-and-ring pulse on the item that succeeded | the success repeats within a task (a logged set, a copy, a save), which also satisfies X8 Choice A; use B there |
 
 Not conflicts: M2 (pull to refresh keeps its resistance under reduced motion because it
 follows the finger) and M3 (the final value is in the DOM at once) hold under both choices.
@@ -337,7 +382,7 @@ if you cannot quote the line or point at the pixel, suppress it.
   4  states                      hover, focus, disabled, empty, error, loading
   5  accessibility               contrast, focus order, labels, motion
   6  responsive                  400px, 768px, 1440px
-  7  craft                       spacing rhythm, alignment, type scale, component craft C1-C10, motion feel M1-M6, animation principles A1-A12
+  7  craft                       spacing rhythm, alignment, type scale, component craft C1-C10, motion feel M1-M6, animation principles A1-A12, motion recipes R1-R20
   8  slop                        the floor above
 ```
 
