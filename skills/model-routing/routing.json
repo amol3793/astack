@@ -1,0 +1,5 @@
+{
+  "planGateFiles": 3,
+  "reviewGateFiles": 3,
+  "escalateAfterFailures": 3
+}

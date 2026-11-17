@@ -108,9 +108,33 @@ It asks rather than denies — a false positive should cost one keystroke, not b
 real work. `.env.example`, `.sample` and `.template` files are skipped, since example
 credentials are the entire point of those files.
 
+## `routing-gate.cjs`
+
+Enforces the `model-routing` skill's checkpoints. Inert until a session is armed, which
+happens when the skill is invoked (`PreToolUse` on `Skill`) or its first step runs
+`node hooks/routing-gate.cjs arm <session_id>`. One script, five events:
+
+| Event | What it does once armed |
+|---|---|
+| `PreToolUse` `Write\|Edit` | Denies a 4th distinct file until an `advisor` agent has finished |
+| `SubagentStop` | An agent whose type ends in `advisor` opens the gate and resets the counters |
+| `Stop` | Blocks once when 3 or more files changed since the advisor last looked |
+| `PostToolUseFailure` `Bash\|PowerShell` | On the 3rd failure in a row, tells the model to stop retrying and escalate |
+| `PostToolUse` `Bash\|PowerShell` | A success resets the failure count |
+
+Only the main session is gated: a call that carries `agent_id` comes from a subagent and
+passes. Scratch files under the OS temp directory and anything under `.claude/` do not
+count. The three numbers live in `skills/model-routing/routing.json`. State is one JSON
+file per session in `<tmp>/astack-routing/`.
+
+It cannot see or change the session model, and the `Stop` block fires once per stop: a
+model that ignores the feedback gets through on the second attempt. The plan gate is the
+hard one.
+
 ## Escape hatches
 
 ```bash
+ASTACK_ROUTING=off
 ASTACK_CAREFUL=off
 ASTACK_COMMIT_GATE=off
 ASTACK_SECRET_SCAN=off

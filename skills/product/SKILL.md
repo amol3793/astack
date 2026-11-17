@@ -1,5 +1,6 @@
 ---
 name: product
+model: opus
 description: Use before building any new Easeur feature, when Amol proposes a product idea, asks "should we build X", or proposes an AI feature. Challenges the assumption, forces an MVP split, and tests whether AI is actually needed. Not a yes-machine.
 ---
 

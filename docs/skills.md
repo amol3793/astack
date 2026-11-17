@@ -63,6 +63,16 @@ it downloads an engine binary and can install hooks. Hands the browser pass to `
 astack checking itself. Stale facts in context files, skills nobody invokes, router
 accuracy against real prompts, context budget, upstream renames. Run monthly.
 
+### `model-routing`
+Token Optimization and Smart Model Routing. The session model drives the work (Sonnet),
+a Haiku `scout` agent does the sweeps, and a Fable `advisor` agent is consulted at three
+checkpoints: the plan for a task past three files, the final diff, and after three
+failures in a row. `review`, `security`, `scale`, `launch` and `product` carry
+`model: opus` in their frontmatter, so they run on Opus for the turn that invokes them
+whatever the session model is. Invoking the skill arms `routing-gate.cjs`, which enforces
+the checkpoints; thresholds are in `skills/model-routing/routing.json`. Small tasks score
+0 and never touch the advisor.
+
 ### `caveman` / `caveman-stats`
 Terse output mode, and real token accounting read from the session transcript.
 `caveman-stats` was broken before astack: it called two hook files that did not exist

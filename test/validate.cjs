@@ -371,6 +371,10 @@ const ROUTES = [
   ["are we still inside the supabase free tier", "scale"],
   ["do we need to upgrade the plan for wear", "scale"],
   ["how many users can eat sync handle", "scale"],
+  // Model-routing skill, added 2026-11-17 (owner request).
+  ["set up model routing so cheap models do the routine work", "model-routing"],
+  ["how do i reduce token usage on long sessions", "model-routing"],
+  ["use fable only as an advisor for this refactor", "model-routing"],
 ];
 
 for (const [prompt, want] of ROUTES) {
@@ -426,6 +430,8 @@ const REAL_PROMPTS = [
   ["This search console property will help in whats?", "web"],
   ["Let me know exactly what visual changes I should expect and I will test it manually", "verify"],
   ["stop running server and start one for my testing and tel me what components to see", "verify"],
+  // The prompt that asked for the model-routing skill, verbatim (2026-11-17).
+  ["I want to create a skill in astack so that in a complex task we use higher models like opus and fable only as a advisors and most of the task can simply handeled by lower models", "model-routing"],
 ];
 
 for (const [prompt, want] of REAL_PROMPTS) {
@@ -679,6 +685,215 @@ check("hooks.json registers the router on UserPromptSubmit", () => {
   if (JSON.stringify(ups).includes('"matcher"')) return "UserPromptSubmit must not take a matcher";
 });
 
+// ---------- model-routing (added 2026-11-17, owner request) ----------
+// Guards: strong models stay advisors, cheap models do the work, and the checkpoints are
+// enforced by a hook rather than remembered.
+function agentFrontmatter(name) {
+  const t = fs.readFileSync(path.join(root, "agents", name + ".md"), "utf8");
+  const m = t.match(/^---\n([\s\S]*?)\n---/);
+  return m ? m[1] : "";
+}
+
+check("advisor agent is pinned to Fable and cannot edit", () => {
+  const fm = agentFrontmatter("advisor");
+  if (!/^name:\s*advisor$/m.test(fm)) return "name is not advisor";
+  if (!/^model:\s*fable$/m.test(fm)) return "not pinned to fable";
+  const tools = (fm.match(/^tools:\s*(.+)$/m) || [])[1] || "";
+  if (!tools) return "no tools line, so it inherits every tool";
+  if (/\b(Edit|Write|Bash|PowerShell|NotebookEdit)\b/.test(tools)) return `can change things: ${tools}`;
+});
+
+check("scout agent is pinned to Haiku and cannot edit", () => {
+  const fm = agentFrontmatter("scout");
+  if (!/^model:\s*haiku$/m.test(fm)) return "not pinned to haiku";
+  const tools = (fm.match(/^tools:\s*(.+)$/m) || [])[1] || "";
+  if (!tools) return "no tools line, so it inherits every tool";
+  if (/\b(Edit|Write|Bash|PowerShell|NotebookEdit)\b/.test(tools)) return `can change things: ${tools}`;
+});
+
+check("judgment skills are pinned to Opus, and only those", () => {
+  const want = new Set(["review", "security", "scale", "launch", "product"]);
+  for (const s of skillDirs) {
+    const t = fs.readFileSync(path.join(root, "skills", s, "SKILL.md"), "utf8");
+    const fm = t.match(/^---\n([\s\S]*?)\n---/)[1];
+    const model = (fm.match(/^model:\s*(\S+)/m) || [])[1] || null;
+    if (want.has(s) && model !== "opus") return `${s} is on ${model}, want opus`;
+    if (!want.has(s) && model) return `${s} pins ${model}; only the judgment skills pin a model`;
+  }
+});
+
+check("model-routing thresholds parse and are whole numbers above zero", () => {
+  const c = readJSON("skills/model-routing/routing.json");
+  for (const k of ["planGateFiles", "reviewGateFiles", "escalateAfterFailures"]) {
+    if (!Number.isInteger(c[k]) || c[k] < 1) return `${k} is ${c[k]}`;
+  }
+});
+
+check("model-routing skill keeps the quality floor and names what is enforced", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "model-routing", "SKILL.md"), "utf8");
+  const need = [
+    "routing-gate.cjs\" arm", "The quality floor", "Escalation ladder", "Score the task",
+    "What is enforced and what is advice", "planGateFiles", "reviewGateFiles",
+    "escalateAfterFailures", "ASTACK_ROUTING=off", "Never spawn a worker on Opus or Fable",
+    "Do not invent a saving you did not measure",
+  ];
+  const missing = need.filter((t) => !body.includes(t));
+  return missing.length ? "missing: " + missing.join(", ") : null;
+});
+
+// Guards: invoking the skill with no task hands back the brief template, and a task in
+// plain words is turned into a brief by the model, not by a form (owner request, 2026-11-17).
+check("model-routing skill preloads the task brief and takes the task as an argument", () => {
+  const body = fs.readFileSync(path.join(root, "skills", "model-routing", "SKILL.md"), "utf8");
+  const need = ["argument-hint:", "$ARGUMENTS", "Goal:", "Scope:", "Done when:", "Risky:", "Unknown:", "do not make Amol fill a form"];
+  const missing = need.filter((t) => !body.includes(t));
+  return missing.length ? "missing: " + missing.join(", ") : null;
+});
+
+check("hooks.json wires routing-gate to every event it handles", () => {
+  const h = readJSON("hooks/hooks.json").hooks;
+  const wired = (event, tool) =>
+    (h[event] || []).some(
+      (g) =>
+        g.hooks.some((x) => x.command.includes("routing-gate.cjs")) &&
+        (!tool || (g.matcher || "").split("|").includes(tool))
+    );
+  const need = [
+    ["PreToolUse", "Write"], ["PreToolUse", "Edit"], ["PreToolUse", "Skill"],
+    ["PostToolUse", "Bash"], ["PostToolUseFailure", "Bash"], ["PostToolUseFailure", "PowerShell"],
+    ["SubagentStop", null], ["Stop", null],
+  ];
+  const missing = need.filter(([e, t]) => !wired(e, t)).map(([e, t]) => e + (t ? ":" + t : ""));
+  if (missing.length) return "not wired: " + missing.join(", ");
+  // A matcher that names agent types would miss a plugin-prefixed "astack:advisor".
+  if (h.SubagentStop.some((g) => "matcher" in g)) return "SubagentStop must not take a matcher";
+});
+
+// Behaviour: one fake session, driven through the events in order.
+{
+  const os = require("os");
+  const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), "astack-routing-test-"));
+  const gate = path.join(root, "hooks", "routing-gate.cjs");
+  const fire = (payload, env = {}) => {
+    const out = execFileSync("node", [gate], {
+      input: JSON.stringify(payload),
+      env: { ...process.env, ASTACK_ROUTING_DIR: stateDir, ASTACK_ROUTING: "", ...env },
+      encoding: "utf8",
+    });
+    if (!out.trim()) return null;
+    const j = JSON.parse(out);
+    return j.hookSpecificOutput ? j.hookSpecificOutput.permissionDecision : j.decision;
+  };
+  const edit = (session, file, extra = {}) =>
+    fire({
+      session_id: session,
+      hook_event_name: "PreToolUse",
+      tool_name: "Edit",
+      tool_input: { file_path: file },
+      ...extra,
+    });
+  const advisorDone = (session, type = "astack:advisor") =>
+    fire({ session_id: session, hook_event_name: "SubagentStop", agent_id: "a1", agent_type: type });
+  const stop = (session, active = false) =>
+    fire({ session_id: session, hook_event_name: "Stop", stop_hook_active: active });
+  const shellFails = (session) =>
+    fire({ session_id: session, hook_event_name: "PostToolUseFailure", tool_name: "Bash", error: "Exit code 1" });
+
+  check("routing-gate does nothing in a session that never armed it", () => {
+    for (const f of ["a", "b", "c", "d", "e"]) {
+      const d = edit("unarmed", `D:/repo/src/${f}.ts`);
+      if (d !== null) return `edit ${f} got ${d}`;
+    }
+    return stop("unarmed") === null ? null : "blocked a stop";
+  });
+
+  check("routing-gate arms when the model-routing skill is invoked", () => {
+    fire({ session_id: "s1", hook_event_name: "PreToolUse", tool_name: "Skill", tool_input: { skill: "astack:model-routing" } });
+    return fs.existsSync(path.join(stateDir, "s1.json")) ? null : "no state file written";
+  });
+
+  check("routing-gate ignores other skills", () => {
+    fire({ session_id: "other", hook_event_name: "PreToolUse", tool_name: "Skill", tool_input: { skill: "astack:review" } });
+    return fs.existsSync(path.join(stateDir, "other.json")) ? "armed on astack:review" : null;
+  });
+
+  check("routing-gate allows the first three files, then denies a fourth", () => {
+    for (const f of ["a", "b", "c"]) {
+      const d = edit("s1", `D:/repo/src/${f}.ts`);
+      if (d !== null) return `file ${f} got ${d}`;
+    }
+    const d = edit("s1", "D:/repo/src/d.ts");
+    return d === "deny" ? null : `fourth file got ${d}`;
+  });
+
+  check("routing-gate lets a known file be edited again while the gate is closed", () => {
+    const d = edit("s1", "D:\\repo\\src\\A.ts"); // same file, Windows spelling
+    return d === null ? null : `got ${d}`;
+  });
+
+  check("routing-gate does not gate subagents or scratch files", () => {
+    const sub = edit("s1", "D:/repo/src/e.ts", { agent_id: "w1", agent_type: "general-purpose" });
+    if (sub !== null) return `subagent edit got ${sub}`;
+    const tmp = edit("s1", path.join(os.tmpdir(), "claude", "scratch.diff"));
+    return tmp === null ? null : `scratch file got ${tmp}`;
+  });
+
+  check("routing-gate blocks the stop once when three files changed unreviewed", () => {
+    if (stop("s1") !== "block") return "did not block";
+    return stop("s1", true) === null ? null : "blocked again while stop_hook_active";
+  });
+
+  check("routing-gate is not opened by an agent that is not the advisor", () => {
+    advisorDone("s1", "astack:scout");
+    const d = edit("s1", "D:/repo/src/d.ts");
+    return d === "deny" ? null : `got ${d}`;
+  });
+
+  check("routing-gate opens both gates when the advisor finishes", () => {
+    advisorDone("s1");
+    const d = edit("s1", "D:/repo/src/d.ts");
+    if (d !== null) return `fourth file still got ${d}`;
+    return stop("s1") === null ? null : "stop blocked right after a review";
+  });
+
+  check("routing-gate escalates on the third shell failure in a row, not before", () => {
+    if (shellFails("s1") !== null) return "fired on failure 1";
+    if (shellFails("s1") !== null) return "fired on failure 2";
+    return shellFails("s1") === "block" ? null : "silent on failure 3";
+  });
+
+  check("routing-gate resets the failure count after a shell success", () => {
+    shellFails("s1");
+    fire({ session_id: "s1", hook_event_name: "PostToolUse", tool_name: "Bash" });
+    if (shellFails("s1") !== null) return "fired on failure 1 after a success";
+    return shellFails("s1") === null ? null : "fired on failure 2 after a success";
+  });
+
+  check("routing-gate honours its escape hatch", () => {
+    fire({ session_id: "s2", hook_event_name: "PreToolUse", tool_name: "Skill", tool_input: { skill: "model-routing" } });
+    for (const f of ["a", "b", "c"]) edit("s2", `D:/repo/src/${f}.ts`);
+    const d = edit("s2", "D:/repo/src/d.ts", {});
+    if (d !== "deny") return `control case got ${d}`;
+    const off = fire(
+      { session_id: "s2", hook_event_name: "PreToolUse", tool_name: "Edit", tool_input: { file_path: "D:/repo/src/d.ts" } },
+      { ASTACK_ROUTING: "off" }
+    );
+    return off === null ? null : `got ${off}`;
+  });
+
+  check("routing-gate arm, status and disarm work from the command line", () => {
+    const env = { ...process.env, ASTACK_ROUTING_DIR: stateDir };
+    execFileSync("node", [gate, "arm", "cli"], { env, encoding: "utf8" });
+    const status = JSON.parse(execFileSync("node", [gate, "status", "cli"], { env, encoding: "utf8" }));
+    if (!status.state || !status.state.armed) return "arm did not arm";
+    if (status.config.planGateFiles !== readJSON("skills/model-routing/routing.json").planGateFiles) return "status does not read routing.json";
+    execFileSync("node", [gate, "disarm", "cli"], { env, encoding: "utf8" });
+    return fs.existsSync(path.join(stateDir, "cli.json")) ? "disarm left the state file" : null;
+  });
+
+  fs.rmSync(stateDir, { recursive: true, force: true });
+}
+
 // ---------- every script must at least parse ----------
 // The session-start hook shipped with a syntax error because nothing ever executed it.
 // Existence checks are not enough: run every script, every time.
@@ -689,6 +904,7 @@ const SCRIPTS = [
   "hooks/secret-scan.cjs",
   "hooks/session-start.cjs",
   "hooks/router.cjs",
+  "hooks/routing-gate.cjs",
   "bin/token-stats.cjs",
   "scripts/gen-ecc-catalogue.cjs",
 ];

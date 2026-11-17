@@ -1,7 +1,7 @@
 # astack
 
 Amol's personal engineering operating system for the Easeur ecosystem.
-One Claude Code plugin: 12 skills, 5 hooks, layered product context, three kinds of
+One Claude Code plugin: 16 skills, 6 hooks, 2 agents, layered product context, three kinds of
 memory, and a router so you never have to remember a skill name.
 
 ```
@@ -26,7 +26,7 @@ that mattered most living only as prose in a CLAUDE.md.
 bash scripts/remove-gstack.sh                       # clears the old fork
 claude plugin marketplace add D:/work/easeur/astack
 claude plugin install astack@astack
-node test/validate.cjs                              # 114 passed, 0 failed
+node test/validate.cjs                              # 196 passed, 0 failed
 ```
 
 Requires Node. No Bun, no daemon, no build step. Full guide: `docs/getting-started.md`.
@@ -66,6 +66,7 @@ suite. Patterns come from your own prompt history.
 | `scale` | Design for 1M users on free tiers: limits, design rules, capacity sheet, when paying is allowed |
 | `audit` | astack checking itself for rot |
 | `new-app` | Starting a new Easeur app: skeleton, CI, watch, and the five places it registers |
+| `model-routing` | Cheap driver, Haiku scout, Fable advisor at enforced checkpoints; Opus for the judgment skills |
 | `caveman` | Terse output mode |
 | `caveman-stats` | Real token accounting |
 
@@ -82,9 +83,23 @@ are called by name. They are better than a rewrite would be. Details: `docs/skil
 | `commit-gate` | Bash | Asks before every commit and push — your manual-test rule, enforced |
 | `secret-scan` | Write, Edit | Asks before writing anything that looks like a credential |
 | `session-start` | Session start | Loads the spine plus this repo's product context |
+| `routing-gate` | Write, Edit, Stop, shell failures | Once `model-routing` is invoked: advisor before a 4th file, advisor review before finishing, escalation after 3 failures |
 
 Every one has an off switch: `ASTACK_ROUTER=off`, `ASTACK_CAREFUL=off`,
-`ASTACK_COMMIT_GATE=off`, `ASTACK_SECRET_SCAN=off`. Details: `docs/hooks.md`.
+`ASTACK_COMMIT_GATE=off`, `ASTACK_SECRET_SCAN=off`, `ASTACK_ROUTING=off`. Details:
+`docs/hooks.md`.
+
+## Agents
+
+Two, both read-only, both pinned to a model so the routing cannot drift.
+
+| Agent | Model | Use |
+|---|---|---|
+| `advisor` | Fable | Approves a plan, reviews a diff, unblocks a stuck driver. Short brief in, verdict out. |
+| `scout` | Haiku | Sweeps many files or a long log and returns the conclusion with `file:line` pointers |
+
+`review`, `security`, `scale`, `launch` and `product` pin `model: opus` in their
+frontmatter. Everything else runs on the session model, which should be Sonnet.
 
 ## Context, layered
 
@@ -132,7 +147,7 @@ node scripts/gen-ecc-catalogue.cjs   # regenerate after an ECC update
 node test/validate.cjs
 ```
 
-114 checks: manifests, skill frontmatter, hook wiring, hook behaviour against real
+196 checks: manifests, skill frontmatter, hook wiring, hook behaviour against real
 command strings, and router accuracy on real prompts. The suite has already caught
 three bugs — `--force-with-lease` flagged as a force-push, and two router
 misclassifications.

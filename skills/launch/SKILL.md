@@ -1,5 +1,6 @@
 ---
 name: launch
+model: opus
 description: Use before any Easeur app goes public, opens to real users, or adds sign-in, payments, marketing email, AI output or a new kind of personal data, and when Amol says "pre-launch", "launch checklist", "ready to launch", "privacy policy", "terms", "cookie banner", "DPDP" or "GDPR". Runs the pre-launch checklist and reports each item with evidence.
 ---
 

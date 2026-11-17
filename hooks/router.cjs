@@ -197,6 +197,18 @@ const RULES = [
       [2, /\b(mermaid|excalidraw|drawio)\b/],
     ],
   ],
+  // Added 2026-11-17 (owner request). Sits before "caveman-stats" so "reduce token usage"
+  // (a tie at 3) goes to the skill that acts, not the one that only reports.
+  [
+    "model-routing",
+    "run the work on a cheap driver and keep the strongest model for advisor checkpoints",
+    [
+      [4, /\b(model routing|token optimi[sz]ation|optimi[sz]e (the |my |our )?tokens?)\b/],
+      [3, /\b(save|cut|reduce|lower) (on )?(tokens?|api costs?|model costs?)\b/],
+      [3, /\b(cheaper|lower|smaller) models?\b/],
+      [3, /\b(opus|fable) (only )?as (an? )?advis[oe]r/],
+    ],
+  ],
   [
     "caveman-stats",
     "show what this session actually cost in tokens",

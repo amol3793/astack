@@ -1,5 +1,6 @@
 ---
 name: scale
+model: opus
 description: Use before designing or building anything that adds a table, an endpoint, server code, a scheduled job, uploads, a realtime feature or a new vendor to an Easeur app, and when Amol says "scalability", "scale", "1M users", "million users", "free tier", "paid plan", "upgrade the plan", "capacity" or "how many users can this handle". Checks the design scales from 0 to 1M users without a rewrite and stays on free tiers until there is revenue.
 ---
 

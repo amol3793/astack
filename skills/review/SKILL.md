@@ -1,5 +1,6 @@
 ---
 name: review
+model: opus
 description: Use when reviewing code, a diff, or a PR — "review this", "any bugs in", "audit this", "look over my changes". Scores every finding for confidence and suppresses anything it cannot quote the code for.
 ---
 

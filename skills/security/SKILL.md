@@ -1,5 +1,6 @@
 ---
 name: security
+model: opus
 description: Use before any Easeur app launches or ships an AI feature, sign-in, uploads, payments or anything that costs money per request, and when Amol says "security review", "security check", "is it secure", "prompt injection", "leaked key", "API abuse", "rate limit" or "someone is burning my credits". Runs the security and cost-abuse checklist and reports each item with evidence.
 ---
 
